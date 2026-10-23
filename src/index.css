@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+:root {
+  --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  
+  /* Brand Tokens */
+  --color-bg-canvas: #FAF8F5;
+  --color-surface-white: #FFFFFF;
+  --color-text-primary: #292522;
+  --color-text-secondary: #77716C;
+  --color-brand-accent: #C77F79;
+  --color-soft-blush: #F1E5E1;
+  --color-muted-sage: #89947D;
+  --color-border-subtle: #E9E3DE;
+  --color-sale-accent: #A84940;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-bg-canvas);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.015em;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+.font-heading {
+  font-family: var(--font-heading);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+/* Custom scrollbar for drawer and modals */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #E0D8D1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C4BBB4;
+}
