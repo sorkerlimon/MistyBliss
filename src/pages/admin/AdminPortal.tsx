@@ -53,6 +53,7 @@ import {
   testSupabaseConnection,
   seedSupabaseInitialData,
 } from '../../lib/supabase';
+import { getAdminCredentials } from '../../lib/adminConfig';
 
 type AdminTab =
   | 'dashboard'
@@ -253,13 +254,15 @@ export const AdminPortal: React.FC = () => {
     setLoginError('');
     const success = adminLogin(loginEmail, loginPassword);
     if (!success) {
-      setLoginError('Invalid credentials. Use limon@technobd.com and admin@123');
+      const creds = getAdminCredentials();
+      setLoginError(`Invalid credentials. Check ADMIN_EMAIL & ADMIN_PASSWORD in .env (Default: ${creds.email})`);
     }
   };
 
   const handleFillDemoCredentials = () => {
-    setLoginEmail('limon@technobd.com');
-    setLoginPassword('admin@123');
+    const creds = getAdminCredentials();
+    setLoginEmail(creds.email);
+    setLoginPassword(creds.password);
     setLoginError('');
   };
 
@@ -694,7 +697,7 @@ export const AdminPortal: React.FC = () => {
               onClick={handleFillDemoCredentials}
               className="w-full py-2 px-3 bg-[#F1E5E1] text-[#292522] rounded-md font-medium text-[11px] hover:bg-[#E8D9D4] transition-colors border border-[#E9E3DE]"
             >
-              Fill Demo Credentials (limon@technobd.com / admin@123)
+              Fill Credentials from .env ({getAdminCredentials().email})
             </button>
             <div className="text-[11px] text-[#77716C] flex justify-between items-center pt-2">
               <button onClick={() => navigate('/')} className="hover:underline flex items-center gap-1">
@@ -2784,8 +2787,8 @@ export const AdminPortal: React.FC = () => {
                 </div>
 
                 <div className="p-3 bg-[#FAF8F5] rounded-lg border border-[#E9E3DE] space-y-1">
-                  <p className="font-semibold text-[#292522]">Authorized Admin Credential</p>
-                  <p className="text-[#77716C]">Current Administrator: <code>limon@technobd.com</code></p>
+                  <p className="font-semibold text-[#292522]">Authorized Admin Credential (.env)</p>
+                  <p className="text-[#77716C]">Current Administrator: <code className="px-1.5 py-0.5 bg-white border border-[#E9E3DE] rounded font-semibold text-[#292522]">{getAdminCredentials().email}</code> (Loaded from <code className="text-[#C77F79]">.env</code>)</p>
                 </div>
 
                 <div className="pt-2 flex justify-end">

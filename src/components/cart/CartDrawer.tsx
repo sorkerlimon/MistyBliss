@@ -279,7 +279,7 @@ export const CartDrawer: React.FC = () => {
                   onClick={handleCheckout}
                   className="w-full py-3 px-4 bg-[#292522] hover:bg-[#3D3834] text-white text-xs font-semibold rounded-md flex items-center justify-center gap-2 transition-colors shadow-xs"
                 >
-                  <span>Proceed to Demo Checkout</span>
+                  <span>Proceed to Checkout</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
                 <button

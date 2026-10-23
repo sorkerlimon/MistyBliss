@@ -16,6 +16,7 @@ import {
   upsertSupabasePromoCode,
   ConnectionTestResult,
 } from '../lib/supabase';
+import { getAdminCredentials, validateAdminCredentials } from '../lib/adminConfig';
 
 interface PromoDiscount {
   code: string;
@@ -561,11 +562,12 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addToast('Promo Code Deleted', 'Code has been removed', 'info');
   };
 
-  // Admin Auth
+  // Admin Auth - Validates credentials configured in .env
   const adminLogin = (email: string, pass: string): boolean => {
-    if (email.trim().toLowerCase() === 'limon@technobd.com' && pass === 'admin@123') {
+    if (validateAdminCredentials(email, pass)) {
       setIsAdminLoggedIn(true);
-      addToast('Welcome Admin', 'Signed in as limon@technobd.com');
+      const creds = getAdminCredentials();
+      addToast('Welcome Admin', `Signed in as ${creds.email}`);
       return true;
     }
     return false;

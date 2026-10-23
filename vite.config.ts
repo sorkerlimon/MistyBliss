@@ -1,18 +1,31 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import {defineConfig, loadEnv} from 'vite';
 
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
   return {
     plugins: [react(), tailwindcss()],
-    envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
+    envPrefix: ['VITE_', 'NEXT_PUBLIC_', 'ADMIN_'],
     define: {
       'process.env.NEXT_PUBLIC_SUPABASE_URL': JSON.stringify(
-        process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vdoabvrhapptxvdkymlp.supabase.co'
+        env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vdoabvrhapptxvdkymlp.supabase.co'
       ),
       'process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY': JSON.stringify(
-        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_jH9XPLPz-q3jOIQLBxXPlA_6PBprcsf'
+        env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_jH9XPLPz-q3jOIQLBxXPlA_6PBprcsf'
+      ),
+      'process.env.ADMIN_EMAIL': JSON.stringify(
+        env.ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'limon@technobd.com'
+      ),
+      'process.env.ADMIN_PASSWORD': JSON.stringify(
+        env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD || 'admin@123'
+      ),
+      'import.meta.env.ADMIN_EMAIL': JSON.stringify(
+        env.ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'limon@technobd.com'
+      ),
+      'import.meta.env.ADMIN_PASSWORD': JSON.stringify(
+        env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD || 'admin@123'
       ),
     },
     resolve: {

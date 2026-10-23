@@ -244,7 +244,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
         
         {/* Desktop Sidebar Filters */}
-        <aside className="hidden lg:block space-y-6 pr-4 border-r border-[#E9E3DE]/80 text-xs">
+        <aside className="hidden lg:block sticky top-28 self-start max-h-[calc(100vh-8rem)] overflow-y-auto pr-4 space-y-6 border-r border-[#E9E3DE]/80 text-xs">
           
           <div className="flex items-center justify-between pb-2 border-b border-[#E9E3DE]">
             <span className="font-semibold text-sm text-[#292522] flex items-center gap-1.5">

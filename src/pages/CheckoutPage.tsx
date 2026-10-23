@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useRouter } from '../context/RouterContext';
 import { useShop } from '../context/ShopContext';
 import { ProductImage } from '../components/common/ProductImage';
-import { CheckCircle2, ShieldCheck, ArrowRight, Truck, CreditCard, Box, Lock } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, ArrowRight, Truck, Lock } from 'lucide-react';
 
 export const CheckoutPage: React.FC = () => {
   const { navigate } = useRouter();
@@ -18,20 +18,17 @@ export const CheckoutPage: React.FC = () => {
   } = useShop();
 
   // Form states
-  const [email, setEmail] = useState('elena.rostova@example.com');
-  const [firstName, setFirstName] = useState('Elena');
-  const [lastName, setLastName] = useState('Rostova');
-  const [address, setAddress] = useState('742 Evergreen Terrace');
-  const [apartment, setApartment] = useState('Apt 3B');
-  const [city, setCity] = useState('Portland');
-  const [state, setState] = useState('OR');
-  const [postalCode, setPostalCode] = useState('97201');
-  const [phone, setPhone] = useState('+1 (503) 555-0192');
+  const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [address, setAddress] = useState('');
+  const [apartment, setApartment] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [phone, setPhone] = useState('');
   const [shippingSpeed, setShippingSpeed] = useState<'standard' | 'express'>('standard');
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cod'>('card');
-  const [cardNumber, setCardNumber] = useState('•••• •••• •••• 4242');
-  const [cardExpiry, setCardExpiry] = useState('08/28');
-  const [cardCvc, setCardCvc] = useState('389');
+  const paymentMethod: 'card' | 'cod' = 'card';
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -126,7 +123,7 @@ export const CheckoutPage: React.FC = () => {
             Thank You, {firstName}!
           </h1>
           <p className="text-xs sm:text-sm text-[#77716C] max-w-md mx-auto leading-relaxed">
-            Your demonstration order <span className="font-semibold text-[#292522]">#{orderConfirmed.orderNumber}</span> has been confirmed. A confirmation receipt has been sent to <span className="text-[#292522] font-medium">{email}</span>.
+            Your order <span className="font-semibold text-[#292522]">#{orderConfirmed.orderNumber}</span> has been confirmed. A confirmation receipt has been sent to <span className="text-[#292522] font-medium">{email}</span>.
           </p>
 
           {/* Delivery estimate */}
@@ -209,13 +206,13 @@ export const CheckoutPage: React.FC = () => {
           Shopping Bag
         </button>
         <span>/</span>
-        <span className="text-[#292522] font-medium">Demo Checkout</span>
+        <span className="text-[#292522] font-medium">Checkout</span>
       </nav>
 
       <div className="flex items-center gap-2 pb-2 border-b border-[#E9E3DE]">
         <Lock className="w-4 h-4 text-[#89947D]" />
         <h1 className="text-xl sm:text-2xl font-bold text-[#292522]">
-          Secure Demo Checkout
+          Secure Checkout
         </h1>
       </div>
 
@@ -257,8 +254,9 @@ export const CheckoutPage: React.FC = () => {
                   className={`w-full px-3 py-2 bg-[#FAF8F5] border rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79] ${
                     formErrors.phone ? 'border-[#A84940]' : 'border-[#E9E3DE]'
                   }`}
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="e.g. +880 1700-000000"
                 />
+                {formErrors.phone && <p className="text-[10px] text-[#A84940] mt-0.5">{formErrors.phone}</p>}
               </div>
             </div>
           </div>
@@ -278,8 +276,12 @@ export const CheckoutPage: React.FC = () => {
                   required
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E9E3DE] rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79]"
+                  className={`w-full px-3 py-2 bg-[#FAF8F5] border rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79] ${
+                    formErrors.firstName ? 'border-[#A84940]' : 'border-[#E9E3DE]'
+                  }`}
+                  placeholder="First name"
                 />
+                {formErrors.firstName && <p className="text-[10px] text-[#A84940] mt-0.5">{formErrors.firstName}</p>}
               </div>
               <div>
                 <label className="block text-[11px] font-medium text-[#77716C] mb-1">Last Name *</label>
@@ -288,8 +290,12 @@ export const CheckoutPage: React.FC = () => {
                   required
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E9E3DE] rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79]"
+                  className={`w-full px-3 py-2 bg-[#FAF8F5] border rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79] ${
+                    formErrors.lastName ? 'border-[#A84940]' : 'border-[#E9E3DE]'
+                  }`}
+                  placeholder="Last name"
                 />
+                {formErrors.lastName && <p className="text-[10px] text-[#A84940] mt-0.5">{formErrors.lastName}</p>}
               </div>
 
               <div className="sm:col-span-2">
@@ -299,9 +305,12 @@ export const CheckoutPage: React.FC = () => {
                   required
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E9E3DE] rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79]"
+                  className={`w-full px-3 py-2 bg-[#FAF8F5] border rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79] ${
+                    formErrors.address ? 'border-[#A84940]' : 'border-[#E9E3DE]'
+                  }`}
                   placeholder="House number and street name"
                 />
+                {formErrors.address && <p className="text-[10px] text-[#A84940] mt-0.5">{formErrors.address}</p>}
               </div>
 
               <div className="sm:col-span-2">
@@ -311,6 +320,7 @@ export const CheckoutPage: React.FC = () => {
                   value={apartment}
                   onChange={(e) => setApartment(e.target.value)}
                   className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E9E3DE] rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79]"
+                  placeholder="Apartment, suite, unit, etc."
                 />
               </div>
 
@@ -321,30 +331,42 @@ export const CheckoutPage: React.FC = () => {
                   required
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E9E3DE] rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79]"
+                  className={`w-full px-3 py-2 bg-[#FAF8F5] border rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79] ${
+                    formErrors.city ? 'border-[#A84940]' : 'border-[#E9E3DE]'
+                  }`}
+                  placeholder="City"
                 />
+                {formErrors.city && <p className="text-[10px] text-[#A84940] mt-0.5">{formErrors.city}</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[11px] font-medium text-[#77716C] mb-1">State *</label>
+                  <label className="block text-[11px] font-medium text-[#77716C] mb-1">State / Division *</label>
                   <input
                     type="text"
                     required
                     value={state}
                     onChange={(e) => setState(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E9E3DE] rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79]"
+                    className={`w-full px-3 py-2 bg-[#FAF8F5] border rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79] ${
+                      formErrors.state ? 'border-[#A84940]' : 'border-[#E9E3DE]'
+                    }`}
+                    placeholder="State or Division"
                   />
+                  {formErrors.state && <p className="text-[10px] text-[#A84940] mt-0.5">{formErrors.state}</p>}
                 </div>
                 <div>
-                  <label className="block text-[11px] font-medium text-[#77716C] mb-1">ZIP Code *</label>
+                  <label className="block text-[11px] font-medium text-[#77716C] mb-1">Postal / ZIP Code *</label>
                   <input
                     type="text"
                     required
                     value={postalCode}
                     onChange={(e) => setPostalCode(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E9E3DE] rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79]"
+                    className={`w-full px-3 py-2 bg-[#FAF8F5] border rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79] ${
+                      formErrors.postalCode ? 'border-[#A84940]' : 'border-[#E9E3DE]'
+                    }`}
+                    placeholder="Postal Code"
                   />
+                  {formErrors.postalCode && <p className="text-[10px] text-[#A84940] mt-0.5">{formErrors.postalCode}</p>}
                 </div>
               </div>
             </div>
@@ -403,92 +425,6 @@ export const CheckoutPage: React.FC = () => {
               </label>
             </div>
           </div>
-
-          {/* Step 4: Payment Simulation */}
-          <div className="bg-white p-5 sm:p-6 rounded-xl border border-[#E9E3DE] space-y-4 text-xs">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-[#292522] flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-[#292522] text-white text-[10px] flex items-center justify-center font-bold">4</span>
-              Payment Selection (Simulated)
-            </h2>
-
-            <div className="space-y-3">
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer font-medium text-[#292522]">
-                  <input
-                    type="radio"
-                    name="payment"
-                    checked={paymentMethod === 'card'}
-                    onChange={() => setPaymentMethod('card')}
-                    className="accent-[#C77F79]"
-                  />
-                  <span>Credit / Debit Card</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer font-medium text-[#292522]">
-                  <input
-                    type="radio"
-                    name="payment"
-                    checked={paymentMethod === 'cod'}
-                    onChange={() => setPaymentMethod('cod')}
-                    className="accent-[#C77F79]"
-                  />
-                  <span>Cash on Delivery (COD)</span>
-                </label>
-              </div>
-
-              {paymentMethod === 'card' ? (
-                <div className="space-y-2 p-3 bg-[#FAF8F5] rounded-lg border border-[#E9E3DE]">
-                  <div>
-                    <label className="block text-[11px] font-medium text-[#77716C] mb-1">Demo Card Number</label>
-                    <input
-                      type="text"
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-white border border-[#E9E3DE] rounded text-xs font-mono"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[11px] font-medium text-[#77716C] mb-1">Expiry</label>
-                      <input
-                        type="text"
-                        value={cardExpiry}
-                        onChange={(e) => setCardExpiry(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-white border border-[#E9E3DE] rounded text-xs font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-medium text-[#77716C] mb-1">CVC</label>
-                      <input
-                        type="text"
-                        value={cardCvc}
-                        onChange={(e) => setCardCvc(e.target.value)}
-                        className="w-full px-3 py-1.5 bg-white border border-[#E9E3DE] rounded text-xs font-mono"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-3 bg-[#FAF8F5] rounded-lg border border-[#E9E3DE] text-xs text-[#77716C]">
-                  Pay in cash upon courier delivery. Please ensure exact change is available.
-                </div>
-              )}
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-3.5 px-6 bg-[#292522] hover:bg-[#3D3834] text-white text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <span>Confirming Demo Order...</span>
-            ) : (
-              <>
-                <span>Place Demo Order · ${finalTotal.toFixed(2)}</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
         </div>
 
         {/* Right: Order Summary Sidebar (5 cols) */}
@@ -555,9 +491,24 @@ export const CheckoutPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-3 bg-[#FAF8F5] rounded-lg border border-[#E9E3DE] text-[11px] text-[#77716C] flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#89947D] shrink-0" />
-            <span>This is a simulated demo checkout. No financial charges will be made.</span>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-3.5 px-6 bg-[#292522] hover:bg-[#3D3834] text-white text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer"
+          >
+            {isSubmitting ? (
+              <span>Placing Order...</span>
+            ) : (
+              <>
+                <span>Place Order · ${finalTotal.toFixed(2)}</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
+
+          <div className="pt-1 text-[11px] text-[#77716C] flex items-center justify-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#89947D]" />
+            <span>Encrypted & secure checkout</span>
           </div>
         </div>
 

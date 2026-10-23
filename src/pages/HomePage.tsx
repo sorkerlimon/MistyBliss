@@ -3,27 +3,18 @@ import { useRouter } from '../context/RouterContext';
 import { useShop } from '../context/ShopContext';
 import { CATEGORIES, PRODUCTS, ROOMS } from '../data/mockData';
 import { ProductCard } from '../components/product/ProductCard';
-import { ArrowRight, Check, Send } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { JournalSection } from '../components/home/JournalSection';
 
 export const HomePage: React.FC = () => {
   const { navigate } = useRouter();
-  const { addToast, products } = useShop();
-  const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
+  const { products } = useShop();
 
   // Filter products for homepage sections
   const bestsellers = products.filter((p) => p.isBestseller).slice(0, 8);
   const newArrivals = products.filter((p) => p.isNew).slice(0, 8);
   const trending = products.slice(10, 18);
   const specialOffers = products.filter((p) => p.compareAtPrice && p.compareAtPrice > p.price).slice(0, 8);
-
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newsletterEmail.trim() && newsletterEmail.includes('@')) {
-      setNewsletterSubscribed(true);
-      addToast('Subscribed to Newsletter', 'Thank you for joining our design circle.');
-    }
-  };
 
   return (
     <div className="space-y-16 sm:space-y-20 pb-12">
@@ -307,48 +298,8 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* SECTION 9: Newsletter ("Stay inspired") */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-[#FAF8F5] border border-[#E9E3DE] rounded-2xl p-8 sm:p-12 text-center max-w-2xl mx-auto">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#C77F79]">
-            The Misty Bliss Journal
-          </span>
-          <h2 className="text-xl sm:text-2xl font-bold text-[#292522] mt-1 mb-2">
-            Stay inspired
-          </h2>
-          <p className="text-xs text-[#77716C] max-w-md mx-auto mb-6 leading-relaxed">
-            Receive private notifications for limited studio releases, seasonal botanical guides, and 10% off your initial order.
-          </p>
-
-          {newsletterSubscribed ? (
-            <div className="bg-white border border-[#89947D] text-[#5E6B56] p-4 rounded-lg inline-flex items-center gap-2 text-xs font-medium">
-              <Check className="w-4 h-4 text-[#89947D]" />
-              <span>You’re subscribed! Check your inbox for your 10% welcome note.</span>
-            </div>
-          ) : (
-            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
-              <input
-                type="email"
-                required
-                placeholder="Enter your email address"
-                value={newsletterEmail}
-                onChange={(e) => setNewsletterEmail(e.target.value)}
-                className="flex-1 px-4 py-2.5 text-xs bg-white border border-[#E9E3DE] rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79] placeholder:text-[#A89F97]"
-              />
-              <button
-                type="submit"
-                className="px-5 py-2.5 bg-[#292522] hover:bg-[#3D3834] text-white text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
-              >
-                <span>Subscribe</span>
-                <Send className="w-3 h-3" />
-              </button>
-            </form>
-          )}
-          <p className="text-[10px] text-[#A89F97] mt-3">
-            Zero spam. Unsubscribe at any time with a single click.
-          </p>
-        </div>
-      </section>
+      {/* SECTION 9: The Misty Bliss Journal (Editorial Blog List) */}
+      <JournalSection />
 
     </div>
   );

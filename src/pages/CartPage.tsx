@@ -80,7 +80,7 @@ export const CartPage: React.FC = () => {
             Shopping Bag
           </h1>
           <p className="text-xs text-[#77716C] mt-1">
-            Review your {cartCount} {cartCount === 1 ? 'item' : 'items'} before proceeding to secure demo checkout
+            Review your {cartCount} {cartCount === 1 ? 'item' : 'items'} before proceeding to secure checkout
           </p>
         </div>
         <button
@@ -298,14 +298,14 @@ export const CartPage: React.FC = () => {
             onClick={() => navigate('/checkout')}
             className="w-full py-3 px-4 bg-[#292522] hover:bg-[#3D3834] text-white text-xs font-semibold rounded-md flex items-center justify-center gap-2 transition-colors shadow-xs"
           >
-            <span>Proceed to Demo Checkout</span>
+            <span>Proceed to Checkout</span>
             <ArrowRight className="w-4 h-4" />
           </button>
 
           {/* Guarantees */}
           <div className="pt-2 text-[11px] text-[#77716C] flex items-center justify-center gap-2">
             <ShieldCheck className="w-3.5 h-3.5 text-[#89947D]" />
-            <span>Guaranteed safe and secure demo checkout</span>
+            <span>Guaranteed safe and secure checkout</span>
           </div>
         </div>
 

@@ -23,7 +23,7 @@ export const Footer: React.FC = () => {
   const { addToast } = useShop();
   const [footerEmail, setFooterEmail] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('BDT');
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -337,53 +337,36 @@ export const Footer: React.FC = () => {
 
         </div>
 
-        {/* Bottom Strip: Payment methods, currency and legal */}
+        {/* Bottom Strip: Region, Developer credit and legal */}
         <div className="pt-10 mt-10 border-t border-[#38332E] flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-[#8C837B]">
           
-          {/* Region / Currency */}
+          {/* Region: Bangladesh Only */}
           <div className="flex items-center gap-2 text-[11px]">
             <Globe className="w-3.5 h-3.5 text-[#A89F97]" />
             <span>Region:</span>
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-              className="bg-[#2C2723] border border-[#443E38] text-white px-2 py-1 rounded text-[11px] focus:outline-none focus:border-[#C77F79]"
+              className="bg-[#2C2723] border border-[#443E38] text-white px-2.5 py-1 rounded text-[11px] focus:outline-none focus:border-[#C77F79]"
             >
-              <option value="USD">United States (USD $)</option>
-              <option value="CAD">Canada (CAD $)</option>
-              <option value="EUR">European Union (EUR €)</option>
-              <option value="GBP">United Kingdom (GBP £)</option>
+              <option value="BDT">Bangladesh (BDT ৳)</option>
             </select>
           </div>
 
-          {/* Payment Method Badges (clean SVGs) */}
-          <div className="flex items-center gap-2 select-none">
-            <span className="text-[10px] text-[#7E756D] mr-1 hidden sm:inline">Secure Payment:</span>
-            <div className="flex items-center gap-1.5">
-              {/* Visa */}
-              <div className="h-6 px-2 rounded bg-white/10 border border-white/10 flex items-center justify-center text-[10px] font-bold text-white tracking-wider">
-                VISA
-              </div>
-              {/* Mastercard */}
-              <div className="h-6 px-2 rounded bg-white/10 border border-white/10 flex items-center justify-center text-[10px] font-bold text-white tracking-wider">
-                MC
-              </div>
-              {/* Amex */}
-              <div className="h-6 px-2 rounded bg-white/10 border border-white/10 flex items-center justify-center text-[10px] font-bold text-white tracking-wider">
-                AMEX
-              </div>
-              {/* Apple Pay */}
-              <div className="h-6 px-2 rounded bg-white/10 border border-white/10 flex items-center justify-center text-[10px] font-semibold text-white">
-                Pay
-              </div>
-              {/* PayPal */}
-              <div className="h-6 px-2 rounded bg-white/10 border border-white/10 flex items-center justify-center text-[10px] font-semibold text-white">
-                PayPal
-              </div>
-            </div>
+          {/* Developer Credit */}
+          <div className="text-[11px] text-[#A89F97] flex items-center gap-1.5">
+            <span>Developer:</span>
+            <a
+              href="https://www.facebook.com/sorkerlimon21"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#C77F79] hover:text-[#E8C5BE] font-semibold underline underline-offset-2 transition-colors"
+            >
+              Limon
+            </a>
           </div>
 
-          {/* Legal and Copyright */}
+          {/* Legal, Copyright & Admin Portal */}
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-[11px]">
             <p>© {new Date().getFullYear()} Misty Bliss Home Décor.</p>
             <div className="flex items-center gap-3">

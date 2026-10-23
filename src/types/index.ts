@@ -141,3 +141,24 @@ export interface PromoCode {
   expiryDate: string;
 }
 
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle?: string;
+  excerpt: string;
+  content: string[];
+  category: 'Studio Craft' | 'Interior Styling' | 'Material Studies' | 'Botanical Notes';
+  author: {
+    name: string;
+    role: string;
+    avatar: string;
+  };
+  publishedDate: string;
+  readTime: string;
+  coverImage: string;
+  tags: string[];
+  featured?: boolean;
+  relatedProductSlugs?: string[];
+}
+
