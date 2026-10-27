@@ -6,6 +6,7 @@ build/
 dist/
 out/
 .next/
+.open-next/
 
 # Cloudflare Wrangler
 .wrangler/
