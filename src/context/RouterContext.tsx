@@ -1,4 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+'use client';
+
+import React, { createContext, useContext, useMemo, useEffect, useState } from 'react';
+import { useRouter as useNextRouter, usePathname, useSearchParams } from 'next/navigation';
 
 export type RouteType =
   | 'home'
@@ -30,16 +33,15 @@ interface RouterContextType {
 
 const RouterContext = createContext<RouterContextType | null>(null);
 
-function parsePath(pathname: string, search: string): RouteState {
+function parsePath(pathname: string, searchParamsObj: URLSearchParams | null): RouteState {
   const searchParams: Record<string, string> = {};
-  if (search) {
-    const sp = new URLSearchParams(search);
-    sp.forEach((value, key) => {
+  if (searchParamsObj) {
+    searchParamsObj.forEach((value, key) => {
       searchParams[key] = value;
     });
   }
 
-  const cleanPath = pathname.replace(/\/+$/, '') || '/';
+  const cleanPath = (pathname || '/').replace(/\/+$/, '') || '/';
 
   if (cleanPath === '/' || cleanPath === '') {
     return { type: 'home', pathname: '/', searchParams };
@@ -92,26 +94,13 @@ function parsePath(pathname: string, search: string): RouteState {
 }
 
 export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentPath, setCurrentPath] = useState({
-    pathname: window.location.pathname,
-    search: window.location.search,
-  });
-
-  useEffect(() => {
-    const handlePopState = () => {
-      setCurrentPath({
-        pathname: window.location.pathname,
-        search: window.location.search,
-      });
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  const nextRouter = useNextRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const route = useMemo(() => {
-    return parsePath(currentPath.pathname, currentPath.search);
-  }, [currentPath]);
+    return parsePath(pathname || '/', searchParams);
+  }, [pathname, searchParams]);
 
   const navigate = (path: string, params?: Record<string, string | number | boolean>) => {
     let fullUrl = path;
@@ -128,15 +117,21 @@ export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
     }
 
-    if (window.location.pathname + window.location.search !== fullUrl) {
-      window.history.pushState({}, '', fullUrl);
-      const urlObj = new URL(fullUrl, window.location.origin);
-      setCurrentPath({
-        pathname: urlObj.pathname,
-        search: urlObj.search,
-      });
+    try {
+      if (nextRouter && nextRouter.push) {
+        nextRouter.push(fullUrl);
+      } else if (typeof window !== 'undefined') {
+        window.location.assign(fullUrl);
+      }
+    } catch {
+      if (typeof window !== 'undefined') {
+        window.location.assign(fullUrl);
+      }
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (

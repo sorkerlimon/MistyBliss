@@ -5,14 +5,19 @@ import { Product, Order, PromoCode, OrderStatus } from '../types';
 // 1. import.meta.env.NEXT_PUBLIC_SUPABASE_URL / VITE_SUPABASE_URL
 // 2. process.env.NEXT_PUBLIC_SUPABASE_URL
 // 3. Fallback user provided project credentials
+const metaEnv = typeof import.meta !== 'undefined' ? (import.meta as unknown as { env: Record<string, string> }).env : undefined;
+const procEnv = typeof process !== 'undefined' ? process.env : undefined;
+
 export const SUPABASE_URL: string =
-  (typeof import.meta !== 'undefined' && (import.meta.env?.NEXT_PUBLIC_SUPABASE_URL || import.meta.env?.VITE_SUPABASE_URL)) ||
-  (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_URL) ||
+  metaEnv?.NEXT_PUBLIC_SUPABASE_URL ||
+  metaEnv?.VITE_SUPABASE_URL ||
+  procEnv?.NEXT_PUBLIC_SUPABASE_URL ||
   'https://vdoabvrhapptxvdkymlp.supabase.co';
 
 export const SUPABASE_PUBLISHABLE_KEY: string =
-  (typeof import.meta !== 'undefined' && (import.meta.env?.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || import.meta.env?.VITE_SUPABASE_ANON_KEY)) ||
-  (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) ||
+  metaEnv?.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  metaEnv?.VITE_SUPABASE_ANON_KEY ||
+  procEnv?.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
   'sb_publishable_jH9XPLPz-q3jOIQLBxXPlA_6PBprcsf';
 
 export const isSupabaseConfigured = Boolean(

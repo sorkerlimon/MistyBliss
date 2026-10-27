@@ -1,4 +1,7 @@
+'use client';
+
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useShop } from '../../context/ShopContext';
 import { useRouter } from '../../context/RouterContext';
 import { ProductImage } from '../common/ProductImage';
@@ -275,19 +278,21 @@ export const CartDrawer: React.FC = () => {
 
               {/* CTA Buttons */}
               <div className="space-y-2 pt-1">
-                <button
-                  onClick={handleCheckout}
-                  className="w-full py-3 px-4 bg-[#292522] hover:bg-[#3D3834] text-white text-xs font-semibold rounded-md flex items-center justify-center gap-2 transition-colors shadow-xs"
+                <Link
+                  href="/checkout"
+                  onClick={closeCartDrawer}
+                  className="w-full py-3 px-4 bg-[#292522] hover:bg-[#3D3834] active:bg-[#1f1c1a] text-white text-xs font-semibold rounded-md flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer touch-manipulation select-none"
                 >
                   <span>Proceed to Checkout</span>
                   <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={handleViewCart}
-                  className="w-full py-2 px-3 text-xs font-medium text-[#77716C] hover:text-[#292522] hover:bg-[#FAF8F5] rounded transition-colors text-center"
+                </Link>
+                <Link
+                  href="/cart"
+                  onClick={closeCartDrawer}
+                  className="w-full py-2 px-3 text-xs font-medium text-[#77716C] hover:text-[#292522] hover:bg-[#FAF8F5] rounded transition-colors text-center block cursor-pointer"
                 >
                   View Full Cart Page
-                </button>
+                </Link>
               </div>
             </div>
           )}

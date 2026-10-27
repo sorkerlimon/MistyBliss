@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { BlogPost } from '../../types';
 import { BLOG_POSTS } from '../../data/mockBlogData';

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { useShop } from '../../context/ShopContext';
 import { useRouter } from '../../context/RouterContext';

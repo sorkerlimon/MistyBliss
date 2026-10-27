@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from '../../context/RouterContext';
 import { useShop } from '../../context/ShopContext';
 import {
@@ -10,98 +13,113 @@ import {
   X,
   ChevronDown,
 } from 'lucide-react';
-import { CATEGORIES, ROOMS } from '../../data/mockData';
+import { CATEGORIES } from '../../data/mockData';
 import { MistyBlissIcon } from '../common/MistyBlissIcon';
+import { MobileMenuDrawer } from './MobileMenuDrawer';
 
 export const Header: React.FC = () => {
   const { route, navigate } = useRouter();
-  const { cartCount, wishlistCount, openCartDrawer, openAccountModal } = useShop();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const {
+    cartCount,
+    wishlistCount,
+    openCartDrawer,
+    openAccountModal,
+    isMobileMenuOpen,
+    toggleMobileMenu,
+  } = useShop();
+
   const [categoriesDropdownOpen, setCategoriesDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchBarOpen, setSearchBarOpen] = useState(false);
+
+  // Handle ESC key to dismiss search or dropdown
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSearchBarOpen(false);
+        setCategoriesDropdownOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate('/search', { q: searchQuery.trim() });
       setSearchBarOpen(false);
-      setMobileMenuOpen(false);
     }
   };
 
-  interface NavLinkItem {
-    label: string;
-    path: string;
-    params?: Record<string, string>;
-    isSale?: boolean;
-  }
-
-  const navLinks: NavLinkItem[] = [
-    { label: 'Home', path: '/' },
-    { label: 'Shop All', path: '/shop' },
-    { label: 'New Arrivals', path: '/shop', params: { new: 'true' } },
-    { label: 'Bestsellers', path: '/shop', params: { bestseller: 'true' } },
-    { label: 'Sale', path: '/shop', params: { sale: 'true' }, isSale: true },
+  const navLinks = [
+    { label: 'Home', href: '/' },
+    { label: 'Shop All', href: '/shop' },
+    { label: 'New Arrivals', href: '/shop?new=true' },
+    { label: 'Bestsellers', href: '/shop?bestseller=true' },
+    { label: 'Sale', href: '/shop?sale=true', isSale: true },
   ];
 
-  const isActive = (path: string, params?: Record<string, string>) => {
-    if (path === '/' && route.pathname === '/') return true;
-    if (path === '/shop' && route.pathname === '/shop') {
-      if (params?.new && route.searchParams.new === 'true') return true;
-      if (params?.bestseller && route.searchParams.bestseller === 'true') return true;
-      if (params?.sale && route.searchParams.sale === 'true') return true;
-      if (!params && !route.searchParams.new && !route.searchParams.bestseller && !route.searchParams.sale) return true;
-    }
+  const isLinkActive = (href: string) => {
+    if (href === '/' && route.pathname === '/') return true;
+    if (href === '/shop' && route.pathname === '/shop' && !route.searchParams.new && !route.searchParams.bestseller && !route.searchParams.sale) return true;
+    if (href.includes('new=true') && route.searchParams.new === 'true') return true;
+    if (href.includes('bestseller=true') && route.searchParams.bestseller === 'true') return true;
+    if (href.includes('sale=true') && route.searchParams.sale === 'true') return true;
     return false;
   };
 
   return (
     <header className="sticky top-0 z-40 bg-[#FAF8F5]/95 backdrop-blur-md border-b border-[#E9E3DE] transition-all">
       {/* Main Top Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-16 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="h-14 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-4">
           
-          {/* Mobile menu trigger */}
-          <div className="flex items-center gap-2 lg:hidden">
+          {/* Menu trigger (mobile, tablet, & desktop accessible) */}
+          <div className="flex items-center gap-0.5 sm:gap-1.5">
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-[#292522] hover:bg-[#F1E5E1] rounded-md transition-colors"
-              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              type="button"
+              id="mobile-menu-trigger"
+              onClick={() => toggleMobileMenu()}
+              className="p-2 sm:p-2.5 text-[#292522] hover:bg-[#F1E5E1] active:bg-[#E9E3DE] rounded-md transition-colors flex items-center justify-center min-w-[42px] min-h-[42px] cursor-pointer touch-manipulation select-none active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C77F79]"
+              aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={isMobileMenuOpen}
+              aria-controls="mobile-navigation-drawer"
             >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
-            <button
-              onClick={() => setSearchBarOpen(!searchBarOpen)}
-              className="p-2 text-[#292522] hover:bg-[#F1E5E1] rounded-md transition-colors"
+            <Link
+              href="/search"
+              className="p-2 sm:p-2.5 text-[#292522] hover:bg-[#F1E5E1] active:bg-[#E9E3DE] rounded-md transition-colors flex items-center justify-center min-w-[38px] min-h-[38px] cursor-pointer touch-manipulation select-none sm:hidden"
               aria-label="Search"
+              title="Search"
             >
               <Search className="w-4 h-4" />
-            </button>
+            </Link>
           </div>
 
           {/* Brand Wordmark & Icon (Zone 1) */}
           <div className="flex-1 lg:flex-none flex justify-center lg:justify-start">
-            <button
-              onClick={() => navigate('/')}
-              className="group flex items-center gap-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C77F79] rounded px-1"
+            <Link
+              href="/"
+              className="group flex items-center gap-1.5 sm:gap-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C77F79] rounded px-1 cursor-pointer"
             >
-              <MistyBlissIcon size={24} />
-              <span className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-[#292522] group-hover:text-[#C77F79] transition-colors whitespace-nowrap">
+              <MistyBlissIcon size={22} className="shrink-0" />
+              <span className="font-heading text-lg sm:text-2xl font-bold tracking-tight text-[#292522] group-hover:text-[#C77F79] transition-colors whitespace-nowrap">
                 Misty Bliss
               </span>
-            </button>
+            </Link>
           </div>
 
           {/* Desktop Navigation Links (Zone 2) */}
           <nav className="hidden lg:flex items-center gap-7 text-[13px] font-medium tracking-normal text-[#292522]">
             {navLinks.map((link) => {
-              const active = isActive(link.path, link.params);
+              const active = isLinkActive(link.href);
               return (
-                <button
+                <Link
                   key={link.label}
-                  onClick={() => navigate(link.path, link.params)}
-                  className={`relative py-1 whitespace-nowrap transition-colors hover:text-[#C77F79] ${
+                  href={link.href}
+                  className={`relative py-1 whitespace-nowrap transition-colors hover:text-[#C77F79] cursor-pointer ${
                     active ? 'text-[#C77F79] font-semibold' : link.isSale ? 'text-[#A84940]' : 'text-[#292522]'
                   }`}
                 >
@@ -109,7 +127,7 @@ export const Header: React.FC = () => {
                   {active && (
                     <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#C77F79] rounded-full" />
                   )}
-                </button>
+                </Link>
               );
             })}
 
@@ -120,8 +138,9 @@ export const Header: React.FC = () => {
               onMouseLeave={() => setCategoriesDropdownOpen(false)}
             >
               <button
+                type="button"
                 onClick={() => setCategoriesDropdownOpen(!categoriesDropdownOpen)}
-                className="flex items-center gap-1 py-1 hover:text-[#C77F79] transition-colors"
+                className="flex items-center gap-1 py-1 hover:text-[#C77F79] transition-colors cursor-pointer"
               >
                 <span>Categories</span>
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${categoriesDropdownOpen ? 'rotate-180' : ''}`} />
@@ -130,17 +149,16 @@ export const Header: React.FC = () => {
               {categoriesDropdownOpen && (
                 <div className="absolute top-full -left-12 w-[520px] bg-white rounded-xl shadow-xl border border-[#E9E3DE] p-5 grid grid-cols-2 gap-3 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                   {CATEGORIES.slice(0, 10).map((cat) => (
-                    <button
+                    <Link
                       key={cat.slug}
-                      onClick={() => {
-                        navigate(`/categories/${cat.slug}`);
-                        setCategoriesDropdownOpen(false);
-                      }}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#FAF8F5] text-left transition-colors group"
+                      href={`/categories/${cat.slug}`}
+                      onClick={() => setCategoriesDropdownOpen(false)}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#FAF8F5] text-left transition-colors group cursor-pointer"
                     >
                       <img
                         src={cat.image}
                         alt={cat.name}
+                        referrerPolicy="no-referrer"
                         className="w-10 h-10 rounded-md object-cover border border-[#E9E3DE]"
                       />
                       <div>
@@ -151,18 +169,16 @@ export const Header: React.FC = () => {
                           {cat.shortName}
                         </div>
                       </div>
-                    </button>
+                    </Link>
                   ))}
                   <div className="col-span-2 pt-2 border-t border-[#E9E3DE] flex justify-between items-center text-xs">
-                    <button
-                      onClick={() => {
-                        navigate('/shop');
-                        setCategoriesDropdownOpen(false);
-                      }}
-                      className="text-[#C77F79] font-medium hover:underline"
+                    <Link
+                      href="/shop"
+                      onClick={() => setCategoriesDropdownOpen(false)}
+                      className="text-[#C77F79] font-medium hover:underline cursor-pointer"
                     >
                       View All 12 Categories →
-                    </button>
+                    </Link>
                     <span className="text-[#77716C]">Handcrafted with natural materials</span>
                   </div>
                 </div>
@@ -171,43 +187,32 @@ export const Header: React.FC = () => {
           </nav>
 
           {/* Action Zone (Zone 3: Search, Account, Wishlist, Bag) */}
-          <div className="flex items-center gap-1 sm:gap-2">
-            {/* Desktop Quick Search Trigger */}
+          <div className="flex items-center gap-0.5 sm:gap-2">
+            {/* Desktop Quick Search Form */}
             <div className="hidden sm:block">
-              {searchBarOpen ? (
-                <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-                  <input
-                    type="search"
-                    placeholder="Search ceramics, lighting, cushions..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    autoFocus
-                    className="w-48 md:w-64 pl-8 pr-7 py-1.5 text-xs bg-white border border-[#E9E3DE] rounded-full focus:outline-none focus:ring-1 focus:ring-[#C77F79] focus:border-[#C77F79]"
-                  />
-                  <Search className="w-3.5 h-3.5 text-[#77716C] absolute left-2.5" />
-                  <button
-                    type="button"
-                    onClick={() => setSearchBarOpen(false)}
-                    className="absolute right-2.5 text-[#77716C] hover:text-[#292522]"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </form>
-              ) : (
+              <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+                <input
+                  type="search"
+                  placeholder="Search décor..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-36 md:w-56 pl-8 pr-3 py-1.5 text-xs bg-white border border-[#E9E3DE] hover:border-[#C77F79]/60 rounded-full focus:outline-none focus:ring-1 focus:ring-[#C77F79] focus:border-[#C77F79] transition-colors text-[#292522]"
+                />
                 <button
-                  onClick={() => setSearchBarOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#77716C] bg-white border border-[#E9E3DE] hover:border-[#C77F79] rounded-full transition-colors"
+                  type="submit"
+                  className="absolute left-2.5 text-[#77716C] hover:text-[#C77F79] cursor-pointer"
+                  aria-label="Submit search"
                 >
                   <Search className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Search décor...</span>
                 </button>
-              )}
+              </form>
             </div>
 
             {/* Account Modal Trigger */}
             <button
+              type="button"
               onClick={openAccountModal}
-              className="p-2 text-[#292522] hover:text-[#C77F79] hover:bg-[#F1E5E1] rounded-full transition-colors relative"
+              className="p-2 text-[#292522] hover:text-[#C77F79] hover:bg-[#F1E5E1] active:bg-[#E9E3DE] rounded-full transition-colors relative cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center touch-manipulation select-none"
               aria-label="Account"
               title="My Account"
             >
@@ -215,9 +220,9 @@ export const Header: React.FC = () => {
             </button>
 
             {/* Wishlist Link with Live Count */}
-            <button
-              onClick={() => navigate('/wishlist')}
-              className="p-2 text-[#292522] hover:text-[#C77F79] hover:bg-[#F1E5E1] rounded-full transition-colors relative"
+            <Link
+              href="/wishlist"
+              className="p-2 text-[#292522] hover:text-[#C77F79] hover:bg-[#F1E5E1] active:bg-[#E9E3DE] rounded-full transition-colors relative cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center touch-manipulation select-none"
               aria-label="Wishlist"
               title="Wishlist"
             >
@@ -227,12 +232,13 @@ export const Header: React.FC = () => {
                   {wishlistCount}
                 </span>
               )}
-            </button>
+            </Link>
 
             {/* Shopping Bag Drawer Trigger with Live Count */}
             <button
+              type="button"
               onClick={openCartDrawer}
-              className="p-2 text-[#292522] hover:text-[#C77F79] hover:bg-[#F1E5E1] rounded-full transition-colors relative"
+              className="p-2 text-[#292522] hover:text-[#C77F79] hover:bg-[#F1E5E1] active:bg-[#E9E3DE] rounded-full transition-colors relative cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center touch-manipulation select-none"
               aria-label="Shopping Bag"
               title="Shopping Bag"
             >
@@ -245,174 +251,37 @@ export const Header: React.FC = () => {
             </button>
           </div>
         </div>
-
-        {/* Mobile Search Input dropdown */}
-        {searchBarOpen && (
-          <div className="sm:hidden pb-3 pt-1">
-            <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-              <input
-                type="search"
-                placeholder="Search products, materials..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                autoFocus
-                className="w-full pl-9 pr-8 py-2 text-xs bg-white border border-[#E9E3DE] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#C77F79]"
-              />
-              <Search className="w-4 h-4 text-[#77716C] absolute left-3" />
-              <button
-                type="button"
-                onClick={() => setSearchBarOpen(false)}
-                className="absolute right-3 text-[#77716C]"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </form>
-          </div>
-        )}
       </div>
 
       {/* Secondary Horizontal Category Navigation Bar */}
-      <div className="border-t border-[#E9E3DE]/70 bg-white/70 overflow-x-auto scrollbar-none">
+      <div className="border-t border-[#E9E3DE]/70 bg-white/70 overflow-x-auto scrollbar-none overscroll-x-contain">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-6 py-2.5 text-xs text-[#77716C] whitespace-nowrap">
-            <button
-              onClick={() => navigate('/shop')}
-              className={`hover:text-[#292522] transition-colors shrink-0 font-medium ${
+          <div className="flex items-center gap-4 sm:gap-6 py-2 sm:py-2.5 text-xs text-[#77716C] whitespace-nowrap">
+            <Link
+              href="/shop"
+              className={`hover:text-[#292522] transition-colors shrink-0 font-medium cursor-pointer ${
                 route.pathname === '/shop' && !route.slug ? 'text-[#C77F79] font-semibold' : ''
               }`}
             >
               All Décor
-            </button>
+            </Link>
             {CATEGORIES.slice(0, 10).map((cat) => (
-              <button
+              <Link
                 key={cat.slug}
-                onClick={() => navigate(`/categories/${cat.slug}`)}
-                className={`hover:text-[#292522] transition-colors shrink-0 ${
+                href={`/categories/${cat.slug}`}
+                className={`hover:text-[#292522] transition-colors shrink-0 cursor-pointer ${
                   route.slug === cat.slug ? 'text-[#C77F79] font-semibold' : ''
                 }`}
               >
                 {cat.name}
-              </button>
+              </Link>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Mobile Drawer Navigation */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}>
-          <div
-            className="w-4/5 max-w-sm h-full bg-[#FAF8F5] p-6 shadow-2xl flex flex-col justify-between overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div>
-              <div className="flex items-center justify-between pb-4 border-b border-[#E9E3DE]">
-                <div className="flex items-center gap-2">
-                  <MistyBlissIcon size={22} />
-                  <span className="font-heading text-lg font-bold text-[#292522]">Misty Bliss</span>
-                </div>
-                <button
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-1 text-[#77716C] hover:text-[#292522]"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Main Links */}
-              <div className="py-4 space-y-1">
-                {navLinks.map((link) => (
-                  <button
-                    key={link.label}
-                    onClick={() => {
-                      navigate(link.path, link.params);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`block w-full text-left py-2.5 px-3 rounded-md text-sm font-medium ${
-                      link.isSale ? 'text-[#A84940] hover:bg-[#F1E5E1]' : 'text-[#292522] hover:bg-[#E9E3DE]/40'
-                    }`}
-                  >
-                    {link.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Category Links */}
-              <div className="pt-2 border-t border-[#E9E3DE]">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#77716C] px-3 mb-2">
-                  Shop by Category
-                </p>
-                <div className="space-y-1">
-                  {CATEGORIES.map((cat) => (
-                    <button
-                      key={cat.slug}
-                      onClick={() => {
-                        navigate(`/categories/${cat.slug}`);
-                        setMobileMenuOpen(false);
-                      }}
-                      className="block w-full text-left py-1.5 px-3 rounded text-xs text-[#77716C] hover:text-[#292522] hover:bg-[#E9E3DE]/30"
-                    >
-                      {cat.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Rooms Links */}
-              <div className="pt-4 mt-2 border-t border-[#E9E3DE]">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#77716C] px-3 mb-2">
-                  Shop by Room
-                </p>
-                <div className="space-y-1">
-                  {ROOMS.map((room) => (
-                    <button
-                      key={room.slug}
-                      onClick={() => {
-                        navigate(`/collections/${room.slug}`);
-                        setMobileMenuOpen(false);
-                      }}
-                      className="block w-full text-left py-1.5 px-3 rounded text-xs text-[#77716C] hover:text-[#292522] hover:bg-[#E9E3DE]/30"
-                    >
-                      {room.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Footer actions in drawer */}
-            <div className="pt-6 border-t border-[#E9E3DE] text-xs text-[#77716C] space-y-2">
-              <button
-                onClick={() => {
-                  navigate('/about');
-                  setMobileMenuOpen(false);
-                }}
-                className="block hover:underline"
-              >
-                About Misty Bliss
-              </button>
-              <button
-                onClick={() => {
-                  navigate('/shipping-returns');
-                  setMobileMenuOpen(false);
-                }}
-                className="block hover:underline"
-              >
-                Shipping & Returns
-              </button>
-              <button
-                onClick={() => {
-                  navigate('/contact');
-                  setMobileMenuOpen(false);
-                }}
-                className="block hover:underline"
-              >
-                Contact Customer Care
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Responsive Navigation Drawer */}
+      <MobileMenuDrawer />
     </header>
   );
 };

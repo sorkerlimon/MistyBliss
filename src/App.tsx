@@ -7,19 +7,20 @@ import { Footer } from './components/layout/Footer';
 import { CartDrawer } from './components/cart/CartDrawer';
 import { AccountModal } from './components/common/AccountModal';
 import { ToastContainer } from './components/common/ToastContainer';
+import { SEO } from './components/common/SEO';
 
-// Pages
-import { HomePage } from './pages/HomePage';
-import { ShopPage } from './pages/ShopPage';
-import { ProductDetailsPage } from './pages/ProductDetailsPage';
-import { SearchPage } from './pages/SearchPage';
-import { WishlistPage } from './pages/WishlistPage';
-import { CartPage } from './pages/CartPage';
-import { CheckoutPage } from './pages/CheckoutPage';
-import { AboutPage } from './pages/AboutPage';
-import { ContactPage } from './pages/ContactPage';
-import { ShippingReturnsPage } from './pages/ShippingReturnsPage';
-import { AdminPortal } from './pages/admin/AdminPortal';
+// Views
+import { HomePage } from './views/HomePage';
+import { ShopPage } from './views/ShopPage';
+import { ProductDetailsPage } from './views/ProductDetailsPage';
+import { SearchPage } from './views/SearchPage';
+import { WishlistPage } from './views/WishlistPage';
+import { CartPage } from './views/CartPage';
+import { CheckoutPage } from './views/CheckoutPage';
+import { AboutPage } from './views/AboutPage';
+import { ContactPage } from './views/ContactPage';
+import { ShippingReturnsPage } from './views/ShippingReturnsPage';
+import { AdminPortal } from './views/admin/AdminPortal';
 
 const AppContent: React.FC = () => {
   const { route, navigate } = useRouter();
@@ -27,6 +28,7 @@ const AppContent: React.FC = () => {
   if (route.type === 'admin') {
     return (
       <div className="min-h-screen bg-[#F6F4F0] text-[#292522]">
+        <SEO />
         <AdminPortal />
         <ToastContainer />
       </div>
@@ -79,6 +81,7 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#292522]">
+      <SEO />
       <AnnouncementBar />
       <Header />
       <div className="flex-1">

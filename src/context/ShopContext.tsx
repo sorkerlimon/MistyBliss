@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import { CartItem, Product, ToastMessage, Order, OrderStatus, PromoCode } from '../types';
 import { PRODUCTS as INITIAL_PRODUCTS } from '../data/mockData';
@@ -54,6 +56,11 @@ interface ShopContextType {
   moveToCartFromWishlist: (productId: string) => void;
 
   // UI state
+  isMobileMenuOpen: boolean;
+  openMobileMenu: () => void;
+  closeMobileMenu: () => void;
+  toggleMobileMenu: () => void;
+
   isCartDrawerOpen: boolean;
   openCartDrawer: () => void;
   closeCartDrawer: () => void;
@@ -91,16 +98,25 @@ interface ShopContextType {
   supabaseStatus: ConnectionTestResult | null;
   supabaseProjectUrl: string;
   refreshSupabaseData: () => Promise<void>;
+  resetDemoCart: () => void;
+  isHydrated: boolean;
 }
 
 const ShopContext = createContext<ShopContextType | null>(null);
 
 const CART_STORAGE_KEY = 'misty_bliss_cart_v2';
 const WISHLIST_STORAGE_KEY = 'misty_bliss_wishlist_v2';
-const PRODUCTS_STORAGE_KEY = 'misty_bliss_products_v2';
+const PRODUCTS_STORAGE_KEY = 'misty_bliss_products_v3';
 const ORDERS_STORAGE_KEY = 'misty_bliss_orders_v2';
 const PROMOS_STORAGE_KEY = 'misty_bliss_promos_v2';
 const ADMIN_AUTH_KEY = 'misty_bliss_admin_auth_v2';
+
+const DEFAULT_CART: CartItem[] = [
+  { productId: 'mb-001', quantity: 1, selectedColor: 'Warm Cream' },
+  { productId: 'mb-005', quantity: 1, selectedColor: 'Blush & Petal' },
+];
+
+const DEFAULT_WISHLIST: string[] = ['mb-008', 'mb-011', 'mb-019'];
 
 const INITIAL_PROMOS: PromoCode[] = [
   {
@@ -297,69 +313,29 @@ const INITIAL_ORDERS: Order[] = [
 ];
 
 export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Products state (stored in localStorage so admin additions/edits persist)
-  const [products, setProducts] = useState<Product[]>(() => {
-    try {
-      const stored = localStorage.getItem(PRODUCTS_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : INITIAL_PRODUCTS;
-    } catch {
-      return INITIAL_PRODUCTS;
-    }
-  });
+  // Hydration safety flag
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Products state
+  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
 
   // Orders state
-  const [orders, setOrders] = useState<Order[]>(() => {
-    try {
-      const stored = localStorage.getItem(ORDERS_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : INITIAL_ORDERS;
-    } catch {
-      return INITIAL_ORDERS;
-    }
-  });
+  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
 
   // Promo Codes state
-  const [promoCodes, setPromoCodes] = useState<PromoCode[]>(() => {
-    try {
-      const stored = localStorage.getItem(PROMOS_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : INITIAL_PROMOS;
-    } catch {
-      return INITIAL_PROMOS;
-    }
-  });
+  const [promoCodes, setPromoCodes] = useState<PromoCode[]>(INITIAL_PROMOS);
 
   // Admin Auth state
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem(ADMIN_AUTH_KEY) === 'true';
-    } catch {
-      return false;
-    }
-  });
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
 
-  // Cart state
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    try {
-      const stored = localStorage.getItem(CART_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [
-        { productId: 'mb-001', quantity: 1, selectedColor: 'Warm Cream' },
-        { productId: 'mb-005', quantity: 1, selectedColor: 'Blush & Petal' },
-      ];
-    } catch {
-      return [];
-    }
-  });
+  // Cart state - initialized identically on SSR and Client
+  const [cart, setCart] = useState<CartItem[]>(DEFAULT_CART);
 
-  // Wishlist state
-  const [wishlist, setWishlist] = useState<string[]>(() => {
-    try {
-      const stored = localStorage.getItem(WISHLIST_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : ['mb-008', 'mb-011', 'mb-019'];
-    } catch {
-      return [];
-    }
-  });
+  // Wishlist state - initialized identically on SSR and Client
+  const [wishlist, setWishlist] = useState<string[]>(DEFAULT_WISHLIST);
 
   // UI state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -367,6 +343,52 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Supabase Database Status
   const [supabaseStatus, setSupabaseStatus] = useState<ConnectionTestResult | null>(null);
+
+  // On client mount: safely hydrate from localStorage without SSR mismatch
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const storedCart = localStorage.getItem(CART_STORAGE_KEY);
+        if (storedCart) {
+          const parsed = JSON.parse(storedCart);
+          if (Array.isArray(parsed)) setCart(parsed);
+        }
+
+        const storedWishlist = localStorage.getItem(WISHLIST_STORAGE_KEY);
+        if (storedWishlist) {
+          const parsed = JSON.parse(storedWishlist);
+          if (Array.isArray(parsed)) setWishlist(parsed);
+        }
+
+        const storedProducts = localStorage.getItem(PRODUCTS_STORAGE_KEY);
+        if (storedProducts) {
+          const parsed = JSON.parse(storedProducts);
+          if (Array.isArray(parsed) && parsed.length > 0) setProducts(parsed);
+        }
+
+        const storedOrders = localStorage.getItem(ORDERS_STORAGE_KEY);
+        if (storedOrders) {
+          const parsed = JSON.parse(storedOrders);
+          if (Array.isArray(parsed)) setOrders(parsed);
+        }
+
+        const storedPromos = localStorage.getItem(PROMOS_STORAGE_KEY);
+        if (storedPromos) {
+          const parsed = JSON.parse(storedPromos);
+          if (Array.isArray(parsed) && parsed.length > 0) setPromoCodes(parsed);
+        }
+
+        const storedAdmin = localStorage.getItem(ADMIN_AUTH_KEY);
+        if (storedAdmin === 'true') {
+          setIsAdminLoggedIn(true);
+        }
+      }
+    } catch (err) {
+      console.warn('Hydration localStorage error:', err);
+    } finally {
+      setIsHydrated(true);
+    }
+  }, []);
 
   // Sync / Refresh data from Supabase
   const refreshSupabaseData = useCallback(async () => {
@@ -409,42 +431,53 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshSupabaseData();
   }, [refreshSupabaseData]);
 
-  // Sync to local storage
+  // Sync to local storage only AFTER initial hydration has finished
   useEffect(() => {
+    if (!isHydrated) return;
     try {
       localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
     } catch {}
-  }, [products]);
+  }, [products, isHydrated]);
 
   useEffect(() => {
+    if (!isHydrated) return;
     try {
       localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
     } catch {}
-  }, [orders]);
+  }, [orders, isHydrated]);
 
   useEffect(() => {
+    if (!isHydrated) return;
     try {
       localStorage.setItem(PROMOS_STORAGE_KEY, JSON.stringify(promoCodes));
     } catch {}
-  }, [promoCodes]);
+  }, [promoCodes, isHydrated]);
 
   useEffect(() => {
+    if (!isHydrated) return;
     try {
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
     } catch {}
-  }, [cart]);
+  }, [cart, isHydrated]);
 
   useEffect(() => {
+    if (!isHydrated) return;
     try {
       localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlist));
     } catch {}
-  }, [wishlist]);
+  }, [wishlist, isHydrated]);
 
   useEffect(() => {
+    if (!isHydrated) return;
     try {
       localStorage.setItem(ADMIN_AUTH_KEY, isAdminLoggedIn ? 'true' : 'false');
     } catch {}
-  }, [isAdminLoggedIn]);
+  }, [isAdminLoggedIn, isHydrated]);
+
+  const resetDemoCart = () => {
+    setCart(DEFAULT_CART);
+    addToast('Demo Cart Loaded', '2 curated items added to your shopping bag', 'success');
+  };
 
   const addToast = (title: string, description?: string, type: ToastMessage['type'] = 'success') => {
     const id = Date.now().toString() + Math.random().toString(36).substring(2, 6);
@@ -752,6 +785,11 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isInWishlist,
         moveToCartFromWishlist,
 
+        isMobileMenuOpen,
+        openMobileMenu: () => setIsMobileMenuOpen(true),
+        closeMobileMenu: () => setIsMobileMenuOpen(false),
+        toggleMobileMenu: () => setIsMobileMenuOpen((prev) => !prev),
+
         isCartDrawerOpen,
         openCartDrawer: () => setIsCartDrawerOpen(true),
         closeCartDrawer: () => setIsCartDrawerOpen(false),
@@ -785,6 +823,8 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
         supabaseStatus,
         supabaseProjectUrl: SUPABASE_URL,
         refreshSupabaseData,
+        resetDemoCart,
+        isHydrated,
       }}
     >
       {children}

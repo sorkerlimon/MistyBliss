@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { Product } from '../../types';
 import { useShop } from '../../context/ShopContext';
@@ -72,8 +74,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Wishlist Button */}
         <button
+          type="button"
           onClick={handleWishlistToggle}
-          className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-xs ${
+          className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-xs cursor-pointer ${
             inWishlist
               ? 'bg-[#C77F79] text-white'
               : 'bg-white/90 backdrop-blur-xs text-[#77716C] hover:text-[#C77F79] hover:bg-white'
@@ -86,8 +89,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* Quick Add Overlay Button on desktop hover */}
         <div className="absolute inset-x-2.5 bottom-2.5 hidden sm:block opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <button
+            type="button"
             onClick={handleAddToCart}
-            className={`w-full py-2 px-3 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 transition-all shadow-md ${
+            className={`w-full py-2 px-3 text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer ${
               justAdded
                 ? 'bg-[#89947D] text-white'
                 : 'bg-[#292522] text-white hover:bg-[#3D3834]'
@@ -109,7 +113,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       {/* Card Content */}
-      <div className="p-3.5 flex flex-col flex-1 justify-between gap-2">
+      <div className="p-3 sm:p-3.5 flex flex-col flex-1 justify-between gap-2">
         <div>
           {/* Material / Category quiet metadata */}
           <div className="text-[11px] text-[#77716C] tracking-wide mb-1 flex items-center gap-1.5 truncate">
@@ -119,19 +123,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
 
           {/* Product Name */}
-          <h3 className="text-sm font-semibold text-[#292522] group-hover:text-[#C77F79] transition-colors line-clamp-1 leading-snug">
+          <h3 className="text-xs sm:text-sm font-semibold text-[#292522] group-hover:text-[#C77F79] transition-colors line-clamp-1 leading-snug">
             {product.name}
           </h3>
         </div>
 
         {/* Price and Mobile Add Button */}
         <div className="pt-2 border-t border-[#E9E3DE]/60 flex items-center justify-between">
-          <div className="flex items-baseline gap-2">
-            <span className="text-sm sm:text-base font-semibold text-[#292522] tabular-nums">
+          <div className="flex items-baseline gap-1.5 sm:gap-2">
+            <span className="text-xs sm:text-base font-semibold text-[#292522] tabular-nums">
               ${product.price}
             </span>
             {hasDiscount && (
-              <span className="text-xs text-[#77716C] line-through tabular-nums">
+              <span className="text-[11px] sm:text-xs text-[#77716C] line-through tabular-nums">
                 ${product.compareAtPrice}
               </span>
             )}
@@ -139,11 +143,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
           {/* Mobile direct Add button */}
           <button
+            type="button"
             onClick={handleAddToCart}
-            className={`sm:hidden p-1.5 rounded-md text-xs font-medium transition-colors ${
+            className={`sm:hidden min-w-[32px] min-h-[32px] flex items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer active:scale-95 ${
               justAdded
                 ? 'bg-[#89947D] text-white'
-                : 'bg-[#FAF8F5] hover:bg-[#F1E5E1] text-[#292522] border border-[#E9E3DE]'
+                : 'bg-[#FAF8F5] hover:bg-[#F1E5E1] active:bg-[#E9E3DE] text-[#292522] border border-[#E9E3DE]'
             }`}
             aria-label="Add to bag"
           >

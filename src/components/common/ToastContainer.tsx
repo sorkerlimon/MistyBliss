@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { useShop } from '../../context/ShopContext';
 import { Check, Info, Sparkles, X } from 'lucide-react';

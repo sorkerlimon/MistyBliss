@@ -434,7 +434,7 @@ export const PRODUCTS: Product[] = [
     categorySlug: 'decorative-trays',
     collectionSlugs: ['living-room', 'dining-room'],
     images: [
-      'https://images.unsplash.com/photo-1590483736622-39da86788755?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?auto=format&fit=crop&w=800&q=80',
     ],
     material: 'Solid White Oak',
@@ -577,7 +577,7 @@ export const PRODUCTS: Product[] = [
     categorySlug: 'wall-decor',
     collectionSlugs: ['living-room', 'dining-room'],
     images: [
-      'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80',
     ],
     material: 'Gesso Plaster & Ash Wood',
@@ -1157,7 +1157,7 @@ export const PRODUCTS: Product[] = [
     categorySlug: 'decorative-trays',
     collectionSlugs: ['dining-room', 'living-room'],
     images: [
-      'https://images.unsplash.com/photo-1590483736622-39da86788755?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?auto=format&fit=crop&w=800&q=80',
     ],
     material: 'Sustainably Harvested Mango Wood',
