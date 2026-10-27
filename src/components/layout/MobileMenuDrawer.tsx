@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useShop } from '../../context/ShopContext';
 import { CATEGORIES, ROOMS } from '../../data/mockData';
@@ -9,6 +10,11 @@ import { X, ArrowRight, Sparkles, Search, ChevronRight } from 'lucide-react';
 
 export const MobileMenuDrawer: React.FC = () => {
   const { isMobileMenuOpen, closeMobileMenu } = useShop();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Prevent background scrolling while the drawer is open
   useEffect(() => {
@@ -32,15 +38,6 @@ export const MobileMenuDrawer: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isMobileMenuOpen, closeMobileMenu]);
 
-  // Primary navigation links required by specification:
-  // 1. All Décor
-  // 2. Vases & Ceramics
-  // 3. Artificial Flowers & Botanicals
-  // 4. Home Accessories
-  // 5. Lighting
-  // 6. New Arrivals
-  // 7. Best Sellers
-  // 8. Sale
   const drawerLinks = [
     { label: 'All Décor', href: '/shop' },
     { label: 'Vases & Ceramics', href: '/categories/vases-ceramics' },
@@ -52,13 +49,17 @@ export const MobileMenuDrawer: React.FC = () => {
     { label: 'Sale', href: '/shop?sale=true', isSale: true },
   ];
 
-  return (
+  if (!mounted) return null;
+
+  // Portal to document.body so fixed positioning is not clipped by the sticky
+  // header's backdrop-filter containing block.
+  return createPortal(
     <div
       id="mobile-navigation-drawer"
       role="dialog"
       aria-modal="true"
       aria-label="Mobile navigation drawer"
-      className={`fixed inset-0 z-50 transition-all duration-300 ${
+      className={`fixed inset-0 z-[100] transition-all duration-300 ${
         isMobileMenuOpen ? 'visible' : 'invisible pointer-events-none'
       }`}
     >
@@ -241,6 +242,7 @@ export const MobileMenuDrawer: React.FC = () => {
           </Link>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

@@ -26,6 +26,7 @@ export const Header: React.FC = () => {
     openAccountModal,
     isMobileMenuOpen,
     toggleMobileMenu,
+    closeMobileMenu,
   } = useShop();
 
   const [categoriesDropdownOpen, setCategoriesDropdownOpen] = useState(false);
@@ -43,6 +44,19 @@ export const Header: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Close the mobile drawer when the viewport reaches desktop nav width
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1024px)');
+    const onChange = (event: MediaQueryListEvent | MediaQueryList) => {
+      if (event.matches) {
+        closeMobileMenu();
+      }
+    };
+    onChange(media);
+    media.addEventListener('change', onChange);
+    return () => media.removeEventListener('change', onChange);
+  }, [closeMobileMenu]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,8 +89,8 @@ export const Header: React.FC = () => {
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="h-14 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-4">
           
-          {/* Menu trigger (mobile, tablet, & desktop accessible) */}
-          <div className="flex items-center gap-0.5 sm:gap-1.5">
+          {/* Menu trigger — mobile/tablet only; desktop uses the main nav */}
+          <div className="flex items-center gap-0.5 sm:gap-1.5 lg:hidden">
             <button
               type="button"
               id="mobile-menu-trigger"
@@ -99,7 +113,7 @@ export const Header: React.FC = () => {
           </div>
 
           {/* Brand Wordmark & Icon (Zone 1) */}
-          <div className="flex-1 lg:flex-none flex justify-center lg:justify-start">
+          <div className="flex-1 lg:flex-none flex justify-center lg:justify-start min-w-0">
             <Link
               href="/"
               className="group flex items-center gap-1.5 sm:gap-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C77F79] rounded px-1 cursor-pointer"
