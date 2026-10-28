@@ -599,6 +599,14 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const adminLogin = (email: string, pass: string): boolean => {
     if (validateAdminCredentials(email, pass)) {
       setIsAdminLoggedIn(true);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(ADMIN_AUTH_KEY, 'true');
+          localStorage.setItem('misty_bliss_admin_email', email.trim().toLowerCase());
+        } catch (e) {
+          console.warn('Could not persist admin session', e);
+        }
+      }
       const creds = getAdminCredentials();
       addToast('Welcome Admin', `Signed in as ${creds.email}`);
       return true;
@@ -608,6 +616,14 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const adminLogout = () => {
     setIsAdminLoggedIn(false);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(ADMIN_AUTH_KEY);
+        localStorage.removeItem('misty_bliss_admin_email');
+      } catch (e) {
+        console.warn('Could not clear admin session', e);
+      }
+    }
     addToast('Logged Out', 'Admin session ended');
   };
 

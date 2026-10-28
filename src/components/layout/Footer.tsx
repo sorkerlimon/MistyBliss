@@ -372,7 +372,7 @@ export const Footer: React.FC = () => {
             </a>
           </div>
 
-          {/* Legal, Copyright & Admin Portal */}
+          {/* Legal & Copyright */}
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-[11px]">
             <p>© {new Date().getFullYear()} Misty Bliss Home Décor.</p>
             <div className="flex items-center gap-3">
@@ -386,10 +386,6 @@ export const Footer: React.FC = () => {
               <span>·</span>
               <Link href="/about" className="hover:text-white transition-colors">
                 Accessibility
-              </Link>
-              <span>·</span>
-              <Link href="/admin" className="text-[#C77F79] hover:underline font-medium">
-                Admin Portal
               </Link>
             </div>
           </div>

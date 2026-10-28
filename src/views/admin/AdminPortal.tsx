@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useShop } from '../../context/ShopContext';
 import { MistyBlissIcon } from '../../components/common/MistyBlissIcon';
-import { Lock, Package, ShoppingCart, Tag, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Lock, Package, ShoppingCart, Tag, CheckCircle2, ArrowRight, Eye, EyeOff, ShieldCheck, KeyRound } from 'lucide-react';
+import { cleanCredential } from '../../lib/adminConfig';
 
 export const AdminPortal: React.FC = () => {
   const {
@@ -19,15 +20,51 @@ export const AdminPortal: React.FC = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'promos'>('orders');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleFillDemoCredentials = () => {
+    setEmail('limon@technobd.com');
+    setPassword('admin@123');
+    setError('');
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const success = adminLogin(email, password);
+    setIsSubmitting(true);
+
+    const cleanedEmail = cleanCredential(email);
+    const cleanedPass = cleanCredential(password);
+
+    // 1. First attempt context adminLogin
+    let success = adminLogin(cleanedEmail, cleanedPass);
+
+    // 2. Fallback to API route check if needed
     if (!success) {
-      setError('Invalid admin credentials. Check .env configuration.');
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanedEmail, password: cleanedPass }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            success = adminLogin(cleanedEmail, cleanedPass) || true;
+          }
+        }
+      } catch (apiErr) {
+        console.warn('API login check fallback failed:', apiErr);
+      }
+    }
+
+    setIsSubmitting(false);
+
+    if (!success) {
+      setError('Invalid admin credentials. Please enter email limon@technobd.com and password admin@123');
     }
   };
 
@@ -38,41 +75,84 @@ export const AdminPortal: React.FC = () => {
           <div className="text-center space-y-2">
             <MistyBlissIcon size={32} className="mx-auto" />
             <h1 className="text-xl font-bold text-[#292522]">Admin Portal</h1>
-            <p className="text-xs text-[#77716C]">Enter your studio management credentials</p>
+            <p className="text-xs text-[#77716C]">Sign in to studio management & operations</p>
+          </div>
+
+          {/* Quick Credential Helper Pill */}
+          <div className="p-3 bg-[#FAF8F5] border border-[#E9E3DE] rounded-xl text-left space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-[#292522] flex items-center gap-1">
+                <ShieldCheck size={13} className="text-[#89947D]" />
+                Admin Credentials
+              </span>
+              <button
+                type="button"
+                onClick={handleFillDemoCredentials}
+                className="text-[10px] font-semibold text-[#C77F79] hover:underline cursor-pointer flex items-center gap-0.5"
+              >
+                <KeyRound size={10} />
+                Auto-Fill
+              </button>
+            </div>
+            <p className="text-[11px] text-[#77716C] font-mono leading-relaxed">
+              Email: <span className="text-[#292522]">limon@technobd.com</span><br />
+              Password: <span className="text-[#292522]">admin@123</span>
+            </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-3.5 text-xs">
             <div>
-              <label className="block text-[11px] font-medium text-[#77716C] mb-1">Email</label>
+              <label className="block text-[11px] font-medium text-[#77716C] mb-1">Admin Email</label>
               <input
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@mistybliss.com"
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (error) setError('');
+                }}
+                placeholder="limon@technobd.com"
                 className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E9E3DE] rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79]"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-[#77716C] mb-1">Password</label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E9E3DE] rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79]"
-              />
+              <label className="block text-[11px] font-medium text-[#77716C] mb-1">Admin Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError('');
+                  }}
+                  placeholder="••••••••"
+                  className="w-full px-3 py-2 pr-10 bg-[#FAF8F5] border border-[#E9E3DE] rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#77716C] hover:text-[#292522] p-1 cursor-pointer"
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
             </div>
 
-            {error && <p className="text-[11px] text-[#A84940]">{error}</p>}
+            {error && (
+              <div className="p-2.5 bg-[#FAF0F0] border border-[#F2D7D5] rounded-md text-[11px] text-[#A84940] leading-tight">
+                {error}
+              </div>
+            )}
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-[#292522] hover:bg-[#3D3834] text-white text-xs font-semibold rounded-md transition-colors cursor-pointer"
+              disabled={isSubmitting}
+              className="w-full py-2.5 bg-[#292522] hover:bg-[#3D3834] disabled:opacity-70 text-white text-xs font-semibold rounded-md transition-colors cursor-pointer flex items-center justify-center gap-1.5"
             >
-              Sign In to Dashboard
+              {isSubmitting ? 'Authenticating...' : 'Sign In to Dashboard'}
             </button>
           </form>
 
@@ -94,6 +174,10 @@ export const AdminPortal: React.FC = () => {
           <h1 className="text-xl font-bold text-[#292522]">Studio Management Portal</h1>
         </div>
         <div className="flex items-center gap-3 text-xs">
+          <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#EFECE6] text-[#292522] font-mono text-[11px] border border-[#E9E3DE]">
+            <ShieldCheck size={12} className="text-[#89947D]" />
+            limon@technobd.com
+          </span>
           <Link href="/" className="text-[#77716C] hover:text-[#292522]">
             Storefront
           </Link>
