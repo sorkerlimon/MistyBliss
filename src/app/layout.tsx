@@ -3,8 +3,10 @@ import React from 'react';
 import '../index.css';
 import { AppProviders } from '../components/providers/AppProviders';
 
+const SITE_URL = 'https://mistybliss.contact-dream-developers.workers.dev';
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://mistybliss.com'),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'Misty Bliss – Artisanal Home Décor, Ceramics & Modern Living',
     template: '%s | Misty Bliss',
@@ -23,27 +25,27 @@ export const metadata: Metadata = {
     'handcrafted pottery',
     'modern luxury home accessories',
   ],
-  authors: [{ name: 'Misty Bliss Studio', url: 'https://mistybliss.com' }],
+  authors: [{ name: 'Misty Bliss Studio', url: SITE_URL }],
   creator: 'Misty Bliss',
   publisher: 'Misty Bliss',
   category: 'Home & Living',
   alternates: {
-    canonical: 'https://mistybliss.com',
+    canonical: SITE_URL,
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://mistybliss.com',
+    url: SITE_URL,
     siteName: 'Misty Bliss',
     title: 'Misty Bliss – Artisanal Home Décor, Ceramics & Modern Living',
     description:
       'Discover thoughtfully curated artisanal home décor, hand-thrown stoneware ceramics, botanical arrangements, lighting, and tactile interior accents.',
     images: [
       {
-        url: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80',
+        url: '/images/og-share.jpg',
         width: 1200,
         height: 630,
-        alt: 'Misty Bliss Artisanal Home Décor & Lifestyle',
+        alt: 'Misty Bliss',
       },
     ],
   },
@@ -52,9 +54,7 @@ export const metadata: Metadata = {
     title: 'Misty Bliss – Artisanal Home Décor, Ceramics & Modern Living',
     description:
       'Discover thoughtfully curated artisanal home décor, hand-thrown stoneware ceramics, botanical arrangements, lighting, and tactile interior accents.',
-    images: [
-      'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80',
-    ],
+    images: ['/images/og-share.jpg'],
     creator: '@mistybliss',
   },
   robots: {
@@ -70,8 +70,16 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/images/misty-bliss-logo-circle.png', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+    shortcut: '/favicon.ico',
   },
+  manifest: '/site.webmanifest',
 };
 
 export const viewport: Viewport = {
@@ -88,22 +96,22 @@ export default function RootLayout({
   const storeSchema = {
     '@context': 'https://schema.org',
     '@type': 'HomeGoodsStore',
-    '@id': 'https://mistybliss.com/#store',
+    '@id': `${SITE_URL}/#store`,
     name: 'Misty Bliss',
     alternateName: 'Misty Bliss Studio',
-    url: 'https://mistybliss.com',
-    logo: 'https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?auto=format&fit=crop&w=400&q=80',
-    image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80',
+    url: SITE_URL,
+    logo: `${SITE_URL}/images/misty-bliss-logo-circle.png`,
+    image: `${SITE_URL}/images/og-share.jpg`,
     description:
       'Artisanal home décor studio specializing in hand-thrown stoneware vases, botanical arrangements, travertine lighting, and minimalist tactile living pieces.',
     priceRange: '$$',
     currenciesAccepted: 'USD',
     paymentAccepted: 'Credit Card, PayPal, Apple Pay, Google Pay',
-    telephone: '+1-503-555-0192',
+    telephone: '+8801571376061',
     email: 'concierge@mistybliss.com',
     contactPoint: {
       '@type': 'ContactPoint',
-      telephone: '+1-503-555-0192',
+      telephone: '+8801571376061',
       contactType: 'customer service',
       availableLanguage: ['English'],
     },
@@ -111,7 +119,7 @@ export default function RootLayout({
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: 'https://mistybliss.com/search?q={search_term_string}',
+        urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },
@@ -120,13 +128,13 @@ export default function RootLayout({
   const webSiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    '@id': 'https://mistybliss.com/#website',
-    url: 'https://mistybliss.com',
+    '@id': `${SITE_URL}/#website`,
+    url: SITE_URL,
     name: 'Misty Bliss',
     description: 'Artisanal Home Décor, Ceramics & Modern Living',
     potentialAction: {
       '@type': 'SearchAction',
-      target: 'https://mistybliss.com/search?q={search_term_string}',
+      target: `${SITE_URL}/search?q={search_term_string}`,
       'query-input': 'required name=search_term_string',
     },
   };

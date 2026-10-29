@@ -236,12 +236,20 @@ export const SEO: React.FC = () => {
       meta.setAttribute('content', content);
     };
 
+    const shareImage = `${origin}/images/og-share.jpg`;
+
     setMetaTag('name', 'description', description);
     setMetaTag('property', 'og:title', title);
     setMetaTag('property', 'og:description', description);
     setMetaTag('property', 'og:url', currentUrl);
+    setMetaTag('property', 'og:image', shareImage);
+    setMetaTag('property', 'og:image:width', '1200');
+    setMetaTag('property', 'og:image:height', '630');
+    setMetaTag('property', 'og:image:alt', 'Misty Bliss');
+    setMetaTag('name', 'twitter:card', 'summary_large_image');
     setMetaTag('name', 'twitter:title', title);
     setMetaTag('name', 'twitter:description', description);
+    setMetaTag('name', 'twitter:image', shareImage);
 
     // Set JSON-LD structured data
     let scriptTag = document.getElementById('app-structured-data') as HTMLScriptElement | null;

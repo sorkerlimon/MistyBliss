@@ -118,7 +118,7 @@ export const Header: React.FC = () => {
               href="/"
               className="group flex items-center gap-1.5 sm:gap-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C77F79] rounded px-1 cursor-pointer"
             >
-              <MistyBlissIcon size={22} className="shrink-0" />
+              <MistyBlissIcon size={34} className="shrink-0 ring-1 ring-[#E9E3DE]" />
               <span className="font-heading text-lg sm:text-2xl font-bold tracking-tight text-[#292522] group-hover:text-[#C77F79] transition-colors whitespace-nowrap">
                 Misty Bliss
               </span>

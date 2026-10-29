@@ -91,7 +91,7 @@ export const AdminPortal: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center p-4 bg-[#F6F4F0]">
         <div className="w-full max-w-sm bg-white p-6 sm:p-8 rounded-2xl border border-[#E9E3DE] shadow-xs space-y-5">
           <div className="text-center space-y-2">
-            <MistyBlissIcon size={32} className="mx-auto" />
+            <MistyBlissIcon size={48} className="mx-auto ring-1 ring-[#E9E3DE]" />
             <h1 className="text-xl font-bold text-[#292522]">Admin Portal</h1>
             <p className="text-xs text-[#77716C]">Sign in to studio management & operations</p>
           </div>
@@ -173,7 +173,7 @@ export const AdminPortal: React.FC = () => {
       <header className="sticky top-0 z-20 bg-[#F6F4F0]/95 backdrop-blur border-b border-[#E9E3DE]">
         <div className="px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <MistyBlissIcon size={22} />
+            <MistyBlissIcon size={32} className="ring-1 ring-[#E9E3DE]" />
             <h1 className="text-base sm:text-lg font-bold text-[#292522] truncate">Studio Management Portal</h1>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 text-xs shrink-0">

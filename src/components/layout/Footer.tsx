@@ -218,7 +218,7 @@ export const Footer: React.FC = () => {
           <div className="lg:col-span-4 space-y-4 sm:space-y-5">
             {/* Logo Lockup with Icon */}
             <Link href="/" className="flex items-center gap-3 group">
-              <MistyBlissIcon size={30} variant="light" />
+              <MistyBlissIcon size={36} className="ring-1 ring-white/20" />
               <span className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-white group-hover:text-[#C77F79] transition-colors">
                 Misty Bliss
               </span>

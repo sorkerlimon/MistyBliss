@@ -6,23 +6,14 @@ import {
   MessageCircle,
   X,
   Send,
-  Sparkles,
-  Package,
-  Clock,
   CheckCheck,
-  ChevronDown,
   Phone,
-  HelpCircle,
   ArrowRight,
   ExternalLink,
-  Search,
-  Tag,
   Star,
 } from 'lucide-react';
 import { MistyBlissIcon } from './MistyBlissIcon';
-import { useShop } from '../../context/ShopContext';
 import { useRouter } from '../../context/RouterContext';
-import { Product } from '../../types';
 
 interface ChatProductCard {
   id: string;
@@ -59,23 +50,18 @@ const INITIAL_MESSAGES: ChatMessage[] = [
   {
     id: 'msg-2',
     sender: 'concierge',
-    text: 'I am your AI Design Concierge. Ask me to search our artisanal ceramics, lighting, botanicals, or check order delivery and styling advice!',
+    text: 'Please contact us on WhatsApp for product help, styling advice, and order support. Send any message here and we will share our WhatsApp link.',
     time: 'Just now',
   },
 ];
 
 const QUICK_PROMPTS = [
-  { label: '🔍 Search Vases & Ceramics', query: 'Show me vases and ceramics' },
-  { label: '💡 Ambient Lighting', query: 'Show me lamps and lighting' },
-  { label: '🕯️ Candles & Diffusers', query: 'Search candles and home fragrance' },
-  { label: '✨ Top Bestsellers', query: 'What are your top bestsellers?' },
-  { label: '🎁 Gift ideas under $75', query: 'Recommend gift ideas under $75' },
-  { label: '📦 Track order', query: 'Can you help me track my order?' },
-  { label: '💬 Chat on WhatsApp', query: 'I would like to chat directly on WhatsApp' },
+  { label: '💬 Chat on WhatsApp', query: 'I would like to chat on WhatsApp' },
+  { label: '📦 Order help', query: 'I need help with my order' },
+  { label: '✨ Styling advice', query: 'I need styling advice' },
 ];
 
 export const LiveChatWidget: React.FC = () => {
-  const { products } = useShop();
   const { navigate } = useRouter();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -90,9 +76,10 @@ export const LiveChatWidget: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // WhatsApp configuration
-  const whatsappNumber = '15035550192'; // Misty Bliss Studio Concierge line
+  const whatsappNumber = '8801571376061';
+  const whatsappDisplay = '+8801571376061';
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    'Hi Misty Bliss Concierge, I would like to inquire about home décor items.'
+    'Hi Misty Bliss, I would like to inquire about home décor items.'
   )}`;
 
   // Dismiss tooltip after 9 seconds if not opened
@@ -131,49 +118,6 @@ export const LiveChatWidget: React.FC = () => {
     setIsOpen(false);
   };
 
-  // Product catalog search engine inside the AI Chatbot
-  const searchCatalog = (userQuery: string): Product[] => {
-    const q = userQuery.toLowerCase();
-    const tokens = q
-      .replace(/[^\w\s]/g, '')
-      .split(/\s+/)
-      .filter((w) => !['show', 'me', 'i', 'want', 'search', 'for', 'find', 'the', 'a', 'an', 'do', 'you', 'have', 'recommend', 'items', 'products'].includes(w));
-
-    // Handle price filters if present
-    let maxPrice: number | null = null;
-    const priceMatch = q.match(/under\s*\$?(\d+)/i) || q.match(/less\s*than\s*\$?(\d+)/i);
-    if (priceMatch) {
-      maxPrice = parseInt(priceMatch[1], 10);
-    }
-
-    // Handle bestsellers/featured
-    const wantsBestsellers = q.includes('bestseller') || q.includes('popular') || q.includes('top');
-    const wantsSale = q.includes('sale') || q.includes('discount') || q.includes('offer');
-    const wantsNew = q.includes('new') || q.includes('latest') || q.includes('arrival');
-
-    return products
-      .filter((product) => {
-        if (maxPrice !== null && product.price > maxPrice) return false;
-        if (wantsSale && (!product.compareAtPrice || product.compareAtPrice <= product.price)) return false;
-        if (wantsBestsellers && !product.isBestseller) return false;
-        if (wantsNew && !product.isNew) return false;
-
-        if (tokens.length === 0) return true;
-
-        const productSearchStr = [
-          product.name,
-          product.description,
-          product.material,
-          product.categorySlug,
-          ...product.collectionSlugs,
-          ...product.roomTypes,
-        ].join(' ').toLowerCase();
-
-        return tokens.some((token) => productSearchStr.includes(token));
-      })
-      .slice(0, 3);
-  };
-
   const handleSendMessage = (textToSend?: string) => {
     const messageContent = (textToSend || inputMessage).trim();
     if (!messageContent) return;
@@ -189,148 +133,26 @@ export const LiveChatWidget: React.FC = () => {
     setInputMessage('');
     setIsTyping(true);
 
-    // AI Concierge automated contextual response & product search
+    // Every visitor message directs them to WhatsApp
     setTimeout(() => {
       setIsTyping(false);
-      const lower = messageContent.toLowerCase();
-      let replyText = '';
-      let actions: ChatMessage['actions'] = undefined;
-      let matchedProducts: ChatProductCard[] | undefined = undefined;
 
-      const isSearchIntent =
-        lower.includes('search') ||
-        lower.includes('show') ||
-        lower.includes('find') ||
-        lower.includes('recommend') ||
-        lower.includes('vase') ||
-        lower.includes('ceramic') ||
-        lower.includes('lamp') ||
-        lower.includes('light') ||
-        lower.includes('candle') ||
-        lower.includes('botanical') ||
-        lower.includes('flower') ||
-        lower.includes('linen') ||
-        lower.includes('cushion') ||
-        lower.includes('pillow') ||
-        lower.includes('tray') ||
-        lower.includes('planter') ||
-        lower.includes('gift') ||
-        lower.includes('bestseller') ||
-        lower.includes('stoneware') ||
-        lower.includes('terracotta') ||
-        lower.includes('under $') ||
-        lower.includes('under');
-
-      if (isSearchIntent) {
-        const found = searchCatalog(messageContent);
-        if (found.length > 0) {
-          replyText = `Here are curated items from our studio collection that match "${messageContent}":`;
-          matchedProducts = found.map((p) => ({
-            id: p.id,
-            name: p.name,
-            slug: p.slug,
-            price: p.price,
-            compareAtPrice: p.compareAtPrice,
-            image: p.images[0],
-            material: p.material,
-            category: p.categorySlug.replace('-', ' '),
-            rating: p.rating,
-          }));
-          actions = [
-            {
-              label: 'Explore Full Search Catalog',
-              actionType: 'link',
-              target: `/search?q=${encodeURIComponent(messageContent)}`,
-            },
-            {
-              label: 'Chat with Stylist on WhatsApp',
-              actionType: 'whatsapp',
-              target: whatsappUrl,
-            },
-          ];
-        } else {
-          replyText = `I couldn't find exact matches for "${messageContent}". Would you like to browse our full search directory or view our bestsellers?`;
-          actions = [
-            {
-              label: 'Search Catalog',
-              actionType: 'link',
-              target: `/search?q=${encodeURIComponent(messageContent)}`,
-            },
-            {
-              label: 'View Bestsellers',
-              actionType: 'link',
-              target: '/shop?bestseller=true',
-            },
-          ];
-        }
-      } else if (lower.includes('whatsapp') || lower.includes('phone') || lower.includes('call')) {
-        replyText =
-          'You can connect directly with our studio team on WhatsApp right now for real-time photo consultations, custom orders, and immediate styling assistance:';
-        actions = [
+      const botMsg: ChatMessage = {
+        id: `bot-${Date.now()}`,
+        sender: 'concierge',
+        text: `Please contact us on WhatsApp: ${whatsappDisplay}`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        actions: [
           {
             label: 'Open WhatsApp Chat 💬',
             actionType: 'whatsapp',
             target: whatsappUrl,
           },
-        ];
-      } else if (lower.includes('track') || lower.includes('order') || lower.includes('status')) {
-        replyText =
-          'To track your order, please check your dispatch email with courier tracking number, or visit our Shipping & Order Tracking page:';
-        actions = [
-          {
-            label: 'Go to Order Tracking',
-            actionType: 'link',
-            target: '/shipping-returns',
-          },
-        ];
-      } else if (lower.includes('shipping') || lower.includes('delivery') || lower.includes('cost')) {
-        replyText =
-          'We offer complimentary Express Courier Shipping on all orders over $75. Standard domestic delivery typically arrives within 2–4 business days with carbon-neutral, plastic-free packaging.';
-        actions = [
-          {
-            label: 'View Shipping Policy',
-            actionType: 'link',
-            target: '/shipping-returns',
-          },
-        ];
-      } else if (lower.includes('return') || lower.includes('refund') || lower.includes('exchange')) {
-        replyText =
-          'We provide 30-day hassle-free returns. Simply contact our concierge or generate a prepaid label via the Shipping & Returns portal.';
-        actions = [
-          {
-            label: 'Returns & Exchange Policy',
-            actionType: 'link',
-            target: '/shipping-returns',
-          },
-        ];
-      } else {
-        replyText =
-          'Thank you for reaching out! You can search our artisanal pieces, check shipping, or speak directly with our styling concierge on WhatsApp.';
-        actions = [
-          {
-            label: 'Search All Products 🔍',
-            actionType: 'link',
-            target: '/search',
-          },
-          {
-            label: 'Continue on WhatsApp',
-            actionType: 'whatsapp',
-            target: whatsappUrl,
-          },
-        ];
-      }
-
-      const botMsg: ChatMessage = {
-        id: `bot-${Date.now()}`,
-        sender: 'concierge',
-        text: replyText,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        products: matchedProducts,
-        actions,
+        ],
       };
 
       setMessages((prev) => [...prev, botMsg]);
-    }, 600);
+    }, 400);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -355,7 +177,7 @@ export const LiveChatWidget: React.FC = () => {
               {/* Concierge Avatar with Live Indicator */}
               <div className="relative">
                 <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-xs border border-white/40 flex items-center justify-center text-white">
-                  <MistyBlissIcon size={22} variant="light" />
+                  <MistyBlissIcon size={28} className="ring-1 ring-white/30" />
                 </div>
                 {/* Active Green Dot */}
                 <span
@@ -375,7 +197,7 @@ export const LiveChatWidget: React.FC = () => {
                 </div>
                 <p className="text-[11px] text-white/90 flex items-center gap-1 mt-0.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse inline-block" />
-                  Product search & styling assistance
+                  WhatsApp support & styling help
                 </p>
               </div>
             </div>
@@ -589,7 +411,7 @@ export const LiveChatWidget: React.FC = () => {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Search products, ceramics, lighting, tracking..."
+                placeholder="Type a message to get our WhatsApp..."
                 className="flex-1 bg-[#FAF8F5] border border-[#E4DDD5] rounded-full px-3.5 py-2 text-xs text-[#292522] placeholder:text-[#A89F97] focus:outline-hidden focus:ring-1 focus:ring-[#C77F79] focus:border-[#C77F79] transition-all"
               />
               <button
@@ -618,7 +440,7 @@ export const LiveChatWidget: React.FC = () => {
             className="cursor-pointer bg-white text-[#292522] px-3.5 py-2 rounded-full shadow-[0_6px_20px_rgba(41,37,34,0.12)] border border-[#EAE3DC] text-xs font-medium flex items-center gap-2 hover:bg-[#FAF8F5] transition-all animate-in fade-in slide-in-from-right-3 duration-300"
           >
             <span className="w-2 h-2 rounded-full bg-[#C77F79] shrink-0 animate-ping" />
-            <span className="text-[11px] sm:text-xs">Search products or chat live</span>
+            <span className="text-[11px] sm:text-xs">Chat with us on WhatsApp</span>
             <button
               type="button"
               onClick={(e) => {

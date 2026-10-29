@@ -67,7 +67,7 @@ export const AboutPage: React.FC = () => {
 
       {/* CTA */}
       <div className="bg-[#FAF8F5] p-8 rounded-2xl border border-[#E9E3DE] text-center space-y-4">
-        <MistyBlissIcon size={32} className="mx-auto" />
+        <MistyBlissIcon size={48} className="mx-auto ring-1 ring-[#E9E3DE]" />
         <h3 className="text-xl font-bold text-[#292522]">Discover the Spring Sanctuary</h3>
         <p className="text-xs text-[#77716C] max-w-md mx-auto">
           Explore our newest stoneware vases, diffuse linen table lights, and botanicals.

@@ -86,7 +86,7 @@ export const MobileMenuDrawer: React.FC = () => {
               onClick={closeMobileMenu}
               className="flex items-center gap-2 group cursor-pointer"
             >
-              <MistyBlissIcon size={24} />
+              <MistyBlissIcon size={32} className="ring-1 ring-[#E9E3DE]" />
               <span className="font-heading text-lg font-bold text-[#292522] group-hover:text-[#C77F79] transition-colors">
                 Misty Bliss
               </span>
