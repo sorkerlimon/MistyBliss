@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { PRODUCTS, CATEGORIES } from '../data/mockData';
+import { PRODUCTS, CATEGORIES, ROOMS } from '../data/mockData';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://mistybliss.com';
@@ -12,10 +12,34 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1.0,
     },
     {
+      url: `${baseUrl}/search`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
       url: `${baseUrl}/shop`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/shop?new=true`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/shop?bestseller=true`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/shop?sale=true`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/about`,
@@ -33,7 +57,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${baseUrl}/shipping-returns`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
-      priority: 0.5,
+      priority: 0.6,
     },
   ];
 
@@ -41,7 +65,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     url: `${baseUrl}/categories/${cat.slug}`,
     lastModified: new Date(),
     changeFrequency: 'weekly',
-    priority: 0.8,
+    priority: 0.85,
+  }));
+
+  const roomPages: MetadataRoute.Sitemap = ROOMS.map((room) => ({
+    url: `${baseUrl}/rooms/${room.slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.75,
   }));
 
   const productPages: MetadataRoute.Sitemap = PRODUCTS.map((prod) => ({
@@ -51,5 +82,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  return [...staticPages, ...categoryPages, ...productPages];
+  return [...staticPages, ...categoryPages, ...roomPages, ...productPages];
 }

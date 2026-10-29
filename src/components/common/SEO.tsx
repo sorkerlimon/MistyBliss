@@ -16,6 +16,7 @@ export const SEO: React.FC = () => {
     let jsonLd: object | null = null;
 
     const currentUrl = typeof window !== 'undefined' ? window.location.href : 'https://mistybliss.com';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://mistybliss.com';
 
     switch (route.type) {
       case 'home':
@@ -26,30 +27,105 @@ export const SEO: React.FC = () => {
           '@context': 'https://schema.org',
           '@type': 'WebSite',
           name: 'Misty Bliss',
-          url: currentUrl,
+          url: origin,
           potentialAction: {
             '@type': 'SearchAction',
-            target: `${typeof window !== 'undefined' ? window.location.origin : ''}/search?q={search_term_string}`,
+            target: `${origin}/search?q={search_term_string}`,
             'query-input': 'required name=search_term_string',
           },
         };
         break;
 
-      case 'shop':
-        if (route.searchParams.sale === 'true') {
+      case 'search': {
+        const query = route.searchParams.q || '';
+        title = query
+          ? `Search results for "${query}" | Misty Bliss Décor`
+          : 'Search Artisanal Home Décor & Ceramics | Misty Bliss';
+        description = query
+          ? `Explore handcrafted stoneware, botanical arrangements, and lighting matching "${query}" at Misty Bliss.`
+          : 'Search our curated catalog of hand-thrown pottery, ambient lamps, Belgian linens, and home accents.';
+        
+        // Filter products matching query for ItemList schema
+        const q = query.trim().toLowerCase();
+        const matched = q
+          ? products.filter(
+              (p) =>
+                p.name.toLowerCase().includes(q) ||
+                p.description.toLowerCase().includes(q) ||
+                p.material.toLowerCase().includes(q) ||
+                p.categorySlug.toLowerCase().includes(q)
+            ).slice(0, 10)
+          : products.slice(0, 10);
+
+        jsonLd = {
+          '@context': 'https://schema.org',
+          '@type': 'SearchResultsPage',
+          name: title,
+          url: currentUrl,
+          mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: matched.length,
+            itemListElement: matched.map((prod, index) => ({
+              '@type': 'ListItem',
+              position: index + 1,
+              item: {
+                '@type': 'Product',
+                name: prod.name,
+                url: `${origin}/products/${prod.slug}`,
+                image: prod.images[0],
+                description: prod.description,
+                material: prod.material,
+                offers: {
+                  '@type': 'Offer',
+                  price: prod.price,
+                  priceCurrency: 'USD',
+                  availability: prod.stockStatus === 'in_stock' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+                },
+              },
+            })),
+          },
+        };
+        break;
+      }
+
+      case 'shop': {
+        const isSale = route.searchParams.sale === 'true';
+        const isNew = route.searchParams.new === 'true';
+        const isBestseller = route.searchParams.bestseller === 'true';
+
+        if (isSale) {
           title = 'Special Offers & Archive Sale | Misty Bliss Décor';
           description = 'Browse limited-time offers on handcrafted ceramic vessels, brass accents, and tactile linen home accessories.';
-        } else if (route.searchParams.new === 'true') {
+        } else if (isNew) {
           title = 'New Spring Arrivals | Handcrafted Décor & Ceramics | Misty Bliss';
           description = 'Explore our newest collection of sculptural stoneware, fluted lighting, and sustainable interior accents.';
-        } else if (route.searchParams.bestseller === 'true') {
+        } else if (isBestseller) {
           title = 'Customer Bestsellers | Most-Loved Home Décor | Misty Bliss';
           description = 'Discover the most cherished ceramics, candles, and decorative trays selected by modern interior enthusiasts.';
         } else {
           title = 'Shop All Home Décor & Living Accents | Misty Bliss';
           description = 'Explore the full catalog of handcrafted stoneware, warm ambient lighting, organic linen textiles, and artisanal wares.';
         }
+
+        jsonLd = {
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: title,
+          description,
+          url: currentUrl,
+          mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: products.slice(0, 12).length,
+            itemListElement: products.slice(0, 12).map((prod, index) => ({
+              '@type': 'ListItem',
+              position: index + 1,
+              url: `${origin}/products/${prod.slug}`,
+              name: prod.name,
+            })),
+          },
+        };
         break;
+      }
 
       case 'category': {
         const cat = CATEGORIES.find((c) => c.slug === route.slug);
@@ -58,12 +134,18 @@ export const SEO: React.FC = () => {
         description = `Browse our handcrafted collection of ${catName.toLowerCase()}, meticulously curated with natural materials and timeless forms.`;
         jsonLd = {
           '@context': 'https://schema.org',
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: typeof window !== 'undefined' ? window.location.origin : '' },
-            { '@type': 'ListItem', position: 2, name: 'Shop', item: `${typeof window !== 'undefined' ? window.location.origin : ''}/shop` },
-            { '@type': 'ListItem', position: 3, name: catName, item: currentUrl },
-          ],
+          '@type': 'CollectionPage',
+          name: title,
+          description,
+          url: currentUrl,
+          breadcrumb: {
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: origin },
+              { '@type': 'ListItem', position: 2, name: 'Shop', item: `${origin}/shop` },
+              { '@type': 'ListItem', position: 3, name: catName, item: currentUrl },
+            ],
+          },
         };
         break;
       }
@@ -72,20 +154,38 @@ export const SEO: React.FC = () => {
         const prod = products.find((p) => p.slug === route.slug);
         if (prod) {
           title = `${prod.name} – Handcrafted Décor | Misty Bliss`;
-          description = `${prod.name}: ${prod.description.slice(0, 140)}... Crafted with ${prod.material}. Free delivery over $75.`;
+          description = `${prod.name}: ${prod.description.slice(0, 140)}... Handcrafted in ${prod.material}. Free delivery over $75.`;
           jsonLd = {
             '@context': 'https://schema.org',
             '@type': 'Product',
             name: prod.name,
             image: prod.images,
             description: prod.description,
-            brand: { '@type': 'Brand', name: 'Misty Bliss' },
+            sku: prod.id,
+            brand: {
+              '@type': 'Brand',
+              name: 'Misty Bliss',
+            },
+            material: prod.material,
             offers: {
               '@type': 'Offer',
               price: prod.price,
               priceCurrency: 'USD',
+              priceValidUntil: '2026-12-31',
+              itemCondition: 'https://schema.org/NewCondition',
               availability: prod.stockStatus === 'in_stock' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
               url: currentUrl,
+              seller: {
+                '@type': 'Organization',
+                name: 'Misty Bliss',
+              },
+            },
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: prod.rating.toString(),
+              reviewCount: Math.max(prod.reviewCount, 1).toString(),
+              bestRating: '5',
+              worstRating: '1',
             },
           };
         }
@@ -126,7 +226,7 @@ export const SEO: React.FC = () => {
     // Update document title
     document.title = title;
 
-    // Helper to set or create meta tag
+    // Helper to set or create meta tags
     const setMetaTag = (attribute: string, key: string, content: string) => {
       let meta = document.querySelector(`meta[${attribute}="${key}"]`);
       if (!meta) {

@@ -9,6 +9,7 @@ import { Footer } from '../layout/Footer';
 import { CartDrawer } from '../cart/CartDrawer';
 import { AccountModal } from '../common/AccountModal';
 import { ToastContainer } from '../common/ToastContainer';
+import { LiveChatWidget } from '../common/LiveChatWidget';
 import { SEO } from '../common/SEO';
 import { usePathname } from 'next/navigation';
 
@@ -40,6 +41,7 @@ const LayoutShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <CartDrawer />
       <AccountModal />
       <ToastContainer />
+      <LiveChatWidget />
     </div>
   );
 };
