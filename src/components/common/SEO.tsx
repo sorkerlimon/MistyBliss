@@ -9,9 +9,9 @@ export const SEO: React.FC = () => {
   const { products, categories } = useShop();
 
   useEffect(() => {
-    let title = 'Misty Bliss – Artisanal Home Décor & Modern Living';
+    let title = 'Buy Home Decor Online in Bangladesh | Luxury Interior Décor – Misty Bliss';
     let description =
-      'Discover thoughtfully curated home décor, stoneware ceramics, handcrafted lighting, botanical accents, and minimalist interior accessories at Misty Bliss.';
+      'Shop luxury home decor online in Bangladesh at Misty Bliss. Buy ceramics, vases, lighting, wall decor, cushions, candles & stylish home decoration items with WhatsApp support.';
     let jsonLd: object | null = null;
 
     const currentUrl = typeof window !== 'undefined' ? window.location.href : 'https://mistybliss.com';
@@ -19,9 +19,9 @@ export const SEO: React.FC = () => {
 
     switch (route.type) {
       case 'home':
-        title = 'Misty Bliss – Artisanal Home Décor, Ceramics & Modern Living';
+        title = 'Buy Home Decor Online in Bangladesh | Luxury Interior Décor – Misty Bliss';
         description =
-          'Shop thoughtfully curated home décor, stoneware vessels, botanical arrangements, lighting, and artisanal accessories crafted for intentional living.';
+          'Shop luxury home decor online in Bangladesh at Misty Bliss. Buy ceramics, vases, lighting, wall decor, cushions, candles & stylish home decoration items with WhatsApp support.';
         jsonLd = {
           '@context': 'https://schema.org',
           '@type': 'WebSite',
@@ -102,7 +102,7 @@ export const SEO: React.FC = () => {
           title = 'Customer Bestsellers | Most-Loved Home Décor | Misty Bliss';
           description = 'Discover the most cherished ceramics, candles, and decorative trays selected by modern interior enthusiasts.';
         } else {
-          title = 'Shop All Home Décor & Living Accents | Misty Bliss';
+          title = 'Shop Home Decor Online in Bangladesh | Misty Bliss';
           description = 'Explore the full catalog of handcrafted stoneware, warm ambient lighting, organic linen textiles, and artisanal wares.';
         }
 

@@ -36,13 +36,21 @@ export const HomePage: React.FC = () => {
       
       {/* SECTION 1: Hero — full artwork, no crop / no overlay CTAs */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
-        <h1 className="sr-only">Better living, beautiful spaces</h1>
         <div className="rounded-2xl overflow-hidden border border-[#E9E3DE] bg-[#FAF8F5] shadow-sm">
           <img
             src="/images/hero-beautiful-spaces.jpg"
-            alt="Better living, beautiful spaces — thoughtful interior design for a comfortable home"
+            alt="Misty Bliss luxury home decor — ceramics, lighting, and beautiful interior spaces in Bangladesh"
             className="block w-full h-auto"
           />
+        </div>
+        <div className="mt-6 sm:mt-8 max-w-3xl">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#292522] tracking-tight leading-tight">
+            Buy Home Decor Online in Bangladesh
+          </h1>
+          <p className="mt-2 sm:mt-3 text-sm sm:text-base text-[#77716C] leading-relaxed">
+            Misty Bliss is your online home decor shop for luxury ceramics, vases, lighting, wall decor,
+            cushions, candles, and stylish home decoration items — curated for modern Bangladeshi homes.
+          </p>
         </div>
       </section>
 
@@ -51,9 +59,11 @@ export const HomePage: React.FC = () => {
         <div className="flex items-end justify-between mb-4 sm:mb-6 pb-2 border-b border-[#E9E3DE]">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-[#292522]">
-              Shop by Category
+              Shop Home Decor by Category
             </h2>
-            <p className="hidden sm:block text-xs text-[#77716C] mt-0.5">Explore pieces curated by domain and craftsmanship</p>
+            <p className="hidden sm:block text-xs text-[#77716C] mt-0.5">
+              Explore ceramics, lighting, wall decor, and more
+            </p>
           </div>
           <Link
             href="/shop"

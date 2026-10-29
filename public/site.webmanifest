@@ -1,11 +1,12 @@
 {
-  "name": "Misty Bliss",
+  "name": "Misty Bliss – Home Decor Bangladesh",
   "short_name": "Misty Bliss",
-  "description": "Artisanal Home Décor, Ceramics & Modern Living",
+  "description": "Buy luxury home decor online in Bangladesh — ceramics, lighting, wall decor, and more.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#D4A017",
   "theme_color": "#FAF8F5",
+  "lang": "en-BD",
   "icons": [
     {
       "src": "/images/misty-bliss-logo-circle.png",
