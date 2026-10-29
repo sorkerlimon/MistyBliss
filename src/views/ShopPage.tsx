@@ -3,7 +3,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from '../context/RouterContext';
 import { useShop } from '../context/ShopContext';
-import { CATEGORIES } from '../data/mockData';
 import { ProductCard } from '../components/product/ProductCard';
 import { SortOption } from '../types';
 import { Filter, X, SlidersHorizontal, RotateCcw, Loader2 } from 'lucide-react';
@@ -18,7 +17,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
   initialCollection,
 }) => {
   const { route, navigate } = useRouter();
-  const { products } = useShop();
+  const { products, categories } = useShop();
 
   // Parse filters from route query or props
   const [selectedCategory, setSelectedCategory] = useState<string>(
@@ -229,7 +228,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
   const getCategoryTitle = () => {
     if (initialCategory) {
       if (initialCategory === 'home-accessories') return 'Home Accessories';
-      const cat = CATEGORIES.find((c) => c.slug === initialCategory);
+      const cat = categories.find((c) => c.slug === initialCategory);
       return cat ? cat.name : 'Category Collection';
     }
     if (initialCollection) {
@@ -323,7 +322,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
             )}
           </div>
 
-          {/* Categories Filter */}
+          {/* Category Filter */}
           {!initialCategory && (
             <div className="space-y-2">
               <h4 className="font-semibold text-[#292522] text-xs uppercase tracking-wider">
@@ -340,7 +339,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
                 >
                   All Categories ({products.length})
                 </button>
-                {CATEGORIES.map((cat) => {
+                {categories.map((cat) => {
                   const count = products.filter((p) => p.categorySlug === cat.slug).length;
                   return (
                     <button
@@ -463,7 +462,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
               
               {selectedCategory !== 'all' && !initialCategory && (
                 <span className="inline-flex items-center gap-1 bg-[#FAF8F5] border border-[#E9E3DE] px-2 py-0.5 rounded text-[11px] text-[#292522]">
-                  Category: {CATEGORIES.find((c) => c.slug === selectedCategory)?.name || selectedCategory}
+                  Category: {categories.find((c) => c.slug === selectedCategory)?.name || selectedCategory}
                   <button onClick={() => setSelectedCategory('all')} className="hover:text-[#A84940] cursor-pointer">
                     <X className="w-3 h-3" />
                   </button>
@@ -600,7 +599,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
                   >
                     All Categories
                   </button>
-                  {CATEGORIES.map((c) => (
+                  {categories.map((c) => (
                     <button
                       key={c.slug}
                       onClick={() => setSelectedCategory(c.slug)}

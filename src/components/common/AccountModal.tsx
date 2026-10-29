@@ -3,12 +3,12 @@
 import React, { useState } from 'react';
 import { useShop } from '../../context/ShopContext';
 import { useRouter } from '../../context/RouterContext';
-import { X, User, Package, MapPin, Heart, LogOut, Check } from 'lucide-react';
+import { X, User, Package, MapPin /* , Heart, LogOut, Check */ } from 'lucide-react';
 
 export const AccountModal: React.FC = () => {
-  const { isAccountModalOpen, closeAccountModal, wishlistCount } = useShop();
+  const { isAccountModalOpen, closeAccountModal /* , wishlistCount */ } = useShop();
   const { navigate } = useRouter();
-  const [activeTab, setActiveTab] = useState<'profile' | 'orders' | 'addresses'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'addresses' /* | 'profile' */>('orders');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   if (!isAccountModalOpen) return null;
@@ -84,6 +84,7 @@ export const AccountModal: React.FC = () => {
             <MapPin className="w-3.5 h-3.5" />
             <span>Saved Addresses</span>
           </button>
+          {/* Profile tab — kept for future
           <button
             onClick={() => setActiveTab('profile')}
             className={`py-2.5 px-3 border-b-2 flex items-center gap-1.5 transition-colors ${
@@ -95,6 +96,7 @@ export const AccountModal: React.FC = () => {
             <User className="w-3.5 h-3.5" />
             <span>Profile</span>
           </button>
+          */}
         </div>
 
         {/* Content */}
@@ -143,6 +145,7 @@ export const AccountModal: React.FC = () => {
             </div>
           )}
 
+          {/* Profile panel — kept for future
           {activeTab === 'profile' && (
             <div className="space-y-3 text-xs">
               <div className="space-y-1">
@@ -177,6 +180,7 @@ export const AccountModal: React.FC = () => {
               </div>
             </div>
           )}
+          */}
         </div>
 
         {/* Footer */}

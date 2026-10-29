@@ -1,24 +1,33 @@
 'use client';
 
-import React, { useState } from 'react';
-import { BlogPost } from '../../types';
-import { BLOG_POSTS } from '../../data/mockBlogData';
+import React, { useMemo, useState } from 'react';
+import { BlogPost, BLOG_CATEGORIES } from '../../types';
 import { BookOpen, Clock, Calendar, ArrowRight, X, Sparkles, Tag, ChevronRight, User } from 'lucide-react';
 import { useRouter } from '../../context/RouterContext';
+import { useShop } from '../../context/ShopContext';
 
 export const JournalSection: React.FC = () => {
   const { navigate } = useRouter();
+  const { blogPosts } = useShop();
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [readingPost, setReadingPost] = useState<BlogPost | null>(null);
 
-  const categories = ['All', 'Studio Craft', 'Interior Styling', 'Material Studies', 'Botanical Notes'];
+  const categories = useMemo(() => {
+    const fromPosts = Array.from(new Set(blogPosts.map((p) => p.category).filter(Boolean)));
+    const known = BLOG_CATEGORIES.filter((c) => fromPosts.includes(c));
+    const extras = fromPosts.filter((c) => !(BLOG_CATEGORIES as readonly string[]).includes(c));
+    return ['All', ...known, ...extras];
+  }, [blogPosts]);
 
-  const filteredPosts = selectedCategory === 'All'
-    ? BLOG_POSTS
-    : BLOG_POSTS.filter((post) => post.category === selectedCategory);
+  const filteredPosts =
+    selectedCategory === 'All'
+      ? blogPosts
+      : blogPosts.filter((post) => post.category === selectedCategory);
 
-  const featuredPost = BLOG_POSTS.find((p) => p.featured) || BLOG_POSTS[0];
-  const listPosts = filteredPosts.filter((p) => p.id !== (selectedCategory === 'All' ? featuredPost.id : ''));
+  const featuredPost = blogPosts.find((p) => p.featured) || blogPosts[0];
+  const listPosts = filteredPosts.filter(
+    (p) => p.id !== (selectedCategory === 'All' ? featuredPost?.id : '')
+  );
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
@@ -59,6 +68,11 @@ export const JournalSection: React.FC = () => {
 
       {/* Main Grid: Featured Hero Post + Companion List */}
       <div className="mt-8 space-y-8">
+        {blogPosts.length === 0 && (
+          <p className="text-xs text-[#77716C] py-8 text-center border border-dashed border-[#E9E3DE] rounded-xl">
+            Journal stories will appear here once published from the admin panel.
+          </p>
+        )}
         {selectedCategory === 'All' && featuredPost && (
           <div className="relative rounded-2xl overflow-hidden bg-white border border-[#E9E3DE] shadow-xs group hover:border-[#C77F79] transition-all">
             <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">

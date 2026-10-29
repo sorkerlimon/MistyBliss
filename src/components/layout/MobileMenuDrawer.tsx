@@ -4,12 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useShop } from '../../context/ShopContext';
-import { CATEGORIES, ROOMS } from '../../data/mockData';
 import { MistyBlissIcon } from '../common/MistyBlissIcon';
 import { X, ArrowRight, Sparkles, Search, ChevronRight } from 'lucide-react';
 
 export const MobileMenuDrawer: React.FC = () => {
-  const { isMobileMenuOpen, closeMobileMenu } = useShop();
+  const { isMobileMenuOpen, closeMobileMenu, categories, rooms } = useShop();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -168,7 +167,7 @@ export const MobileMenuDrawer: React.FC = () => {
               Curated Spaces & Rooms
             </p>
             <div className="grid grid-cols-2 gap-1.5 text-xs">
-              {ROOMS.map((room) => (
+              {rooms.map((room) => (
                 <Link
                   key={room.slug}
                   href={`/collections/${room.slug}`}
@@ -203,7 +202,7 @@ export const MobileMenuDrawer: React.FC = () => {
               </Link>
             </div>
             <div className="grid grid-cols-2 gap-1.5 text-xs">
-              {CATEGORIES.slice(0, 8).map((cat) => (
+              {categories.slice(0, 8).map((cat) => (
                 <Link
                   key={cat.slug}
                   href={`/categories/${cat.slug}`}

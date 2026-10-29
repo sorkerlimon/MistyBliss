@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useShop } from '../../context/ShopContext';
-import { ROOMS } from '../../data/mockData';
 import { MistyBlissIcon } from '../common/MistyBlissIcon';
 import {
   Instagram,
@@ -18,20 +17,95 @@ import {
   RotateCcw,
   Sparkles,
 } from 'lucide-react';
-import { recordNewsletterSubscriber } from '../../lib/supabase';
+const NEWSLETTER_RATE_KEY = 'misty_bliss_newsletter_last_submit';
 
 export const Footer: React.FC = () => {
-  const { addToast } = useShop();
+  const { addToast, rooms } = useShop();
   const [footerEmail, setFooterEmail] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [subscribeError, setSubscribeError] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const [formStartedAt, setFormStartedAt] = useState(0);
   const [currency, setCurrency] = useState('BDT');
+  // Avoid hydration mismatch when password managers inject DOM into the email field
+  const [newsletterReady, setNewsletterReady] = useState(false);
+  useEffect(() => {
+    setNewsletterReady(true);
+    setFormStartedAt(Date.now());
+  }, []);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (footerEmail.trim() && footerEmail.includes('@')) {
+    setSubscribeError('');
+
+    const email = footerEmail.trim().toLowerCase();
+    if (!email || !email.includes('@')) {
+      setSubscribeError('Please enter a valid email address.');
+      return;
+    }
+
+    // Client-side 1/minute guard for clearer UX
+    try {
+      const last = Number(localStorage.getItem(NEWSLETTER_RATE_KEY) || 0);
+      const elapsed = Date.now() - last;
+      if (last && elapsed < 60_000) {
+        const waitSec = Math.ceil((60_000 - elapsed) / 1000);
+        const msg = `Please wait ${waitSec} second${waitSec === 1 ? '' : 's'} before trying again. Only one signup per minute.`;
+        setSubscribeError(msg);
+        addToast('Slow down a moment', msg, 'info');
+        return;
+      }
+    } catch {
+      /* ignore storage */
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          source: 'footer-subscription',
+          company: honeypot,
+          formStartedAt,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.status === 429 || data.code === 'rate_limited') {
+        const msg =
+          data.message ||
+          'Please wait a minute before subscribing again. Only one request per minute is allowed.';
+        setSubscribeError(msg);
+        addToast('Too many attempts', msg, 'info');
+        return;
+      }
+
+      if (!res.ok || !data.success) {
+        const msg = data.message || 'Could not subscribe right now. Please try again.';
+        setSubscribeError(msg);
+        addToast('Subscription failed', msg, 'info');
+        return;
+      }
+
+      try {
+        localStorage.setItem(NEWSLETTER_RATE_KEY, String(Date.now()));
+      } catch {
+        /* ignore */
+      }
       setIsSubscribed(true);
-      recordNewsletterSubscriber(footerEmail, 'footer-subscription').catch(() => {});
-      addToast('Subscribed to Studio Journal', 'Welcome to Misty Bliss. 10% code applied to your next purchase.');
+      setFooterEmail('');
+      addToast(
+        'Subscribed to Studio Journal',
+        data.message || 'Welcome to Misty Bliss. 10% code applied to your next purchase.'
+      );
+    } catch {
+      setSubscribeError('Network error. Please check your connection and try again.');
+      addToast('Network error', 'Please try again in a moment.', 'info');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -242,7 +316,7 @@ export const Footer: React.FC = () => {
                 Curated Spaces
               </h5>
               <ul className="space-y-2 text-[#C4BBB4]">
-                {ROOMS.map((room) => (
+                {rooms.map((room) => (
                   <li key={room.slug}>
                     <Link
                       href={`/collections/${room.slug}`}
@@ -318,24 +392,53 @@ export const Footer: React.FC = () => {
                   <Check className="w-4 h-4 text-[#89947D] shrink-0" />
                   <span>Welcome! Check your inbox for code WELCOME10.</span>
                 </div>
+              ) : !newsletterReady ? (
+                <div className="flex gap-2 h-[34px]" aria-hidden />
               ) : (
-                <form onSubmit={handleSubscribe} className="flex gap-2">
-                  <input
-                    type="email"
-                    required
-                    placeholder="Enter email address"
-                    value={footerEmail}
-                    onChange={(e) => setFooterEmail(e.target.value)}
-                    className="flex-1 px-3 py-2 text-xs bg-[#1F1C1A] border border-[#443E38] rounded-md text-white placeholder:text-[#77716C] focus:outline-none focus:border-[#C77F79]"
-                  />
-                  <button
-                    type="submit"
-                    className="px-3.5 py-2 bg-[#FAF8F5] hover:bg-[#F1E5E1] text-[#292522] rounded-md text-xs font-semibold transition-colors flex items-center justify-center shrink-0 cursor-pointer"
-                    aria-label="Subscribe to newsletter"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                  </button>
-                </form>
+                <div className="space-y-2">
+                  <form onSubmit={handleSubscribe} className="flex gap-2" noValidate>
+                    {/* Honeypot — leave empty; bots often fill this */}
+                    <input
+                      type="text"
+                      name="company"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                      tabIndex={-1}
+                      autoComplete="off"
+                      aria-hidden="true"
+                      className="absolute opacity-0 pointer-events-none h-0 w-0 overflow-hidden"
+                    />
+                    <input
+                      type="email"
+                      required
+                      placeholder="Enter email address"
+                      value={footerEmail}
+                      onChange={(e) => {
+                        setFooterEmail(e.target.value);
+                        if (subscribeError) setSubscribeError('');
+                      }}
+                      autoComplete="email"
+                      data-lpignore="true"
+                      data-1p-ignore
+                      data-form-type="other"
+                      disabled={isSubmitting}
+                      className="flex-1 px-3 py-2 text-xs bg-[#1F1C1A] border border-[#443E38] rounded-md text-white placeholder:text-[#77716C] focus:outline-none focus:border-[#C77F79] disabled:opacity-60"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="px-3.5 py-2 bg-[#FAF8F5] hover:bg-[#F1E5E1] disabled:opacity-60 text-[#292522] rounded-md text-xs font-semibold transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+                      aria-label="Subscribe to newsletter"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                    </button>
+                  </form>
+                  {subscribeError && (
+                    <p className="text-[11px] text-[#E8C5BE] leading-snug" role="alert">
+                      {subscribeError}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
 

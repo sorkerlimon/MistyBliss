@@ -1,13 +1,30 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
-import { CartItem, Product, ToastMessage, Order, OrderStatus, PromoCode } from '../types';
-import { PRODUCTS as INITIAL_PRODUCTS } from '../data/mockData';
+import {
+  CartItem,
+  Product,
+  ToastMessage,
+  Order,
+  OrderStatus,
+  PromoCode,
+  Category,
+  RoomCollection,
+  BlogPost,
+  NewsletterSubscriber,
+} from '../types';
+import {
+  PRODUCTS as INITIAL_PRODUCTS,
+  CATEGORIES as INITIAL_CATEGORIES,
+  ROOMS as INITIAL_ROOMS,
+} from '../data/mockData';
+import { BLOG_POSTS as INITIAL_BLOG_POSTS } from '../data/mockBlogData';
 import {
   SUPABASE_URL,
   isSupabaseConfigured,
   testSupabaseConnection,
   fetchSupabaseProducts,
+  ensureSupabaseProductsCatalog,
   upsertSupabaseProduct,
   deleteSupabaseProduct,
   fetchSupabaseOrders,
@@ -16,9 +33,19 @@ import {
   deleteSupabaseOrder,
   fetchSupabasePromoCodes,
   upsertSupabasePromoCode,
+  fetchSupabaseCategories,
+  upsertSupabaseCategory,
+  deleteSupabaseCategory,
+  ensureSupabaseRoomsCatalog,
+  ensureSupabaseBlogCatalog,
+  upsertSupabaseBlogPost,
+  deleteSupabaseBlogPost,
+  fetchSupabaseNewsletterSubscribers,
+  deleteSupabaseNewsletterSubscriber,
   ConnectionTestResult,
 } from '../lib/supabase';
 import { getAdminCredentials, validateAdminCredentials } from '../lib/adminConfig';
+import { slugify, uniqueSlug } from '../lib/slug';
 
 interface PromoDiscount {
   code: string;
@@ -88,6 +115,26 @@ interface ShopContextType {
   togglePromoStatus: (promoId: string) => void;
   deletePromoCode: (promoId: string) => void;
 
+  // Categories Management
+  categories: Category[];
+  addCategory: (category: Omit<Category, 'id' | 'slug'> & { slug?: string }) => Category | null;
+  updateCategory: (category: Category) => void;
+  deleteCategory: (categoryId: string) => void;
+
+  // Rooms (homepage / collections)
+  rooms: RoomCollection[];
+
+  // Journal / blog posts
+  blogPosts: BlogPost[];
+  addBlogPost: (post: Omit<BlogPost, 'id' | 'slug'> & { slug?: string }) => BlogPost | null;
+  updateBlogPost: (post: BlogPost) => void;
+  deleteBlogPost: (postId: string) => void;
+
+  // Newsletter Design Circle members
+  newsletterSubscribers: NewsletterSubscriber[];
+  refreshNewsletterSubscribers: () => Promise<void>;
+  deleteNewsletterSubscriber: (id: number | string) => void;
+
   // Admin Auth
   isAdminLoggedIn: boolean;
   adminLogin: (email: string, pass: string) => boolean;
@@ -106,9 +153,12 @@ const ShopContext = createContext<ShopContextType | null>(null);
 
 const CART_STORAGE_KEY = 'misty_bliss_cart_v2';
 const WISHLIST_STORAGE_KEY = 'misty_bliss_wishlist_v2';
-const PRODUCTS_STORAGE_KEY = 'misty_bliss_products_v3';
+const PRODUCTS_STORAGE_KEY = 'misty_bliss_products_v4_db';
 const ORDERS_STORAGE_KEY = 'misty_bliss_orders_v2';
 const PROMOS_STORAGE_KEY = 'misty_bliss_promos_v2';
+const CATEGORIES_STORAGE_KEY = 'misty_bliss_categories_v1';
+const ROOMS_STORAGE_KEY = 'misty_bliss_rooms_v1';
+const BLOG_STORAGE_KEY = 'misty_bliss_blog_posts_v1';
 const ADMIN_AUTH_KEY = 'misty_bliss_admin_auth_v2';
 
 const DEFAULT_CART: CartItem[] = [
@@ -325,6 +375,18 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Promo Codes state
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>(INITIAL_PROMOS);
 
+  // Categories state
+  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
+
+  // Rooms state
+  const [rooms, setRooms] = useState<RoomCollection[]>(INITIAL_ROOMS);
+
+  // Blog / journal posts
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(INITIAL_BLOG_POSTS);
+
+  // Newsletter subscribers
+  const [newsletterSubscribers, setNewsletterSubscribers] = useState<NewsletterSubscriber[]>([]);
+
   // Admin Auth state
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
 
@@ -360,10 +422,24 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (Array.isArray(parsed)) setWishlist(parsed);
         }
 
-        const storedProducts = localStorage.getItem(PRODUCTS_STORAGE_KEY);
-        if (storedProducts) {
-          const parsed = JSON.parse(storedProducts);
-          if (Array.isArray(parsed) && parsed.length > 0) setProducts(parsed);
+        // Products / rooms: local cache only when Supabase is not configured.
+        // With Supabase, refresh below replaces state from the database.
+        if (!isSupabaseConfigured) {
+          const storedProducts = localStorage.getItem(PRODUCTS_STORAGE_KEY);
+          if (storedProducts) {
+            const parsed = JSON.parse(storedProducts);
+            if (Array.isArray(parsed) && parsed.length > 0) setProducts(parsed);
+          }
+          const storedRooms = localStorage.getItem(ROOMS_STORAGE_KEY);
+          if (storedRooms) {
+            const parsed = JSON.parse(storedRooms);
+            if (Array.isArray(parsed) && parsed.length > 0) setRooms(parsed);
+          }
+          const storedBlog = localStorage.getItem(BLOG_STORAGE_KEY);
+          if (storedBlog) {
+            const parsed = JSON.parse(storedBlog);
+            if (Array.isArray(parsed) && parsed.length > 0) setBlogPosts(parsed);
+          }
         }
 
         const storedOrders = localStorage.getItem(ORDERS_STORAGE_KEY);
@@ -376,6 +452,12 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (storedPromos) {
           const parsed = JSON.parse(storedPromos);
           if (Array.isArray(parsed) && parsed.length > 0) setPromoCodes(parsed);
+        }
+
+        const storedCategories = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+        if (storedCategories) {
+          const parsed = JSON.parse(storedCategories);
+          if (Array.isArray(parsed) && parsed.length > 0) setCategories(parsed);
         }
 
         const storedAdmin = localStorage.getItem(ADMIN_AUTH_KEY);
@@ -397,11 +479,15 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSupabaseStatus(conn);
 
       if (conn.connected) {
-        // Fetch products if table exists in Supabase
+        // Products always come from Supabase when the table exists.
+        // Seed the full catalog if the remote table is empty/incomplete.
         if (conn.tablesStatus?.products) {
-          const dbProducts = await fetchSupabaseProducts();
+          const dbProducts = await ensureSupabaseProductsCatalog(INITIAL_PRODUCTS);
           if (dbProducts && dbProducts.length > 0) {
             setProducts(dbProducts);
+          } else {
+            const fallback = await fetchSupabaseProducts();
+            if (fallback && fallback.length > 0) setProducts(fallback);
           }
         }
 
@@ -419,6 +505,36 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (dbPromos && dbPromos.length > 0) {
             setPromoCodes(dbPromos);
           }
+        }
+
+        // Fetch categories if table exists in Supabase
+        if (conn.tablesStatus?.categories) {
+          const dbCategories = await fetchSupabaseCategories();
+          if (dbCategories && dbCategories.length > 0) {
+            setCategories(dbCategories);
+          }
+        }
+
+        // Rooms for homepage / collections
+        if (conn.tablesStatus?.rooms) {
+          const dbRooms = await ensureSupabaseRoomsCatalog(INITIAL_ROOMS);
+          if (dbRooms && dbRooms.length > 0) {
+            setRooms(dbRooms);
+          }
+        }
+
+        // Journal blog posts
+        if (conn.tablesStatus?.blog_posts) {
+          const dbPosts = await ensureSupabaseBlogCatalog(INITIAL_BLOG_POSTS);
+          if (dbPosts && dbPosts.length > 0) {
+            setBlogPosts(dbPosts);
+          }
+        }
+
+        // Newsletter Design Circle members
+        if (conn.tablesStatus?.newsletter_subscribers) {
+          const subs = await fetchSupabaseNewsletterSubscribers();
+          if (subs) setNewsletterSubscribers(subs);
         }
       }
     } catch (err) {
@@ -452,6 +568,27 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem(PROMOS_STORAGE_KEY, JSON.stringify(promoCodes));
     } catch {}
   }, [promoCodes, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    try {
+      localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
+    } catch {}
+  }, [categories, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    try {
+      localStorage.setItem(ROOMS_STORAGE_KEY, JSON.stringify(rooms));
+    } catch {}
+  }, [rooms, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    try {
+      localStorage.setItem(BLOG_STORAGE_KEY, JSON.stringify(blogPosts));
+    } catch {}
+  }, [blogPosts, isHydrated]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -593,6 +730,177 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const deletePromoCode = (promoId: string) => {
     setPromoCodes((prev) => prev.filter((p) => p.id !== promoId));
     addToast('Promo Code Deleted', 'Code has been removed', 'info');
+  };
+
+  // Category CRUD
+  const addCategory = (input: Omit<Category, 'id' | 'slug'> & { slug?: string }): Category | null => {
+    const name = input.name.trim();
+    if (!name) {
+      addToast('Category name required', 'Enter a name before saving', 'info');
+      return null;
+    }
+    if (!input.image?.trim()) {
+      addToast('Image required', 'Provide an image link or upload a file', 'info');
+      return null;
+    }
+
+    const slug = uniqueSlug(input.slug?.trim() || name, categories.map((c) => c.slug));
+    const newCategory: Category = {
+      id: `cat-${slug}-${Date.now().toString(36)}`,
+      slug,
+      name,
+      shortName: (input.shortName || name).trim(),
+      description: (input.description || '').trim(),
+      image: input.image.trim(),
+      imageSource: input.imageSource || 'url',
+    };
+
+    setCategories((prev) => [...prev, newCategory]);
+    addToast('Category Created', `${newCategory.name} is live on the storefront`);
+    upsertSupabaseCategory(newCategory, categories.length + 1).catch((err) => {
+      console.warn('Supabase category add failed:', err);
+    });
+    return newCategory;
+  };
+
+  const updateCategory = (updated: Category) => {
+    const others = categories.filter((c) => c.id !== updated.id).map((c) => c.slug);
+    const slug = uniqueSlug(updated.slug || updated.name, others);
+    const next: Category = {
+      ...updated,
+      slug: slugify(slug) || updated.slug,
+      name: updated.name.trim(),
+      shortName: (updated.shortName || updated.name).trim(),
+      description: (updated.description || '').trim(),
+      image: updated.image.trim(),
+      imageSource: updated.imageSource || 'url',
+    };
+    setCategories((prev) => prev.map((c) => (c.id === next.id ? next : c)));
+    addToast('Category Updated', `${next.name} saved`);
+    const sortOrder = categories.findIndex((c) => c.id === next.id) + 1;
+    upsertSupabaseCategory(next, sortOrder > 0 ? sortOrder : 1).catch((err) => {
+      console.warn('Supabase category update failed:', err);
+    });
+  };
+
+  const deleteCategory = (categoryId: string) => {
+    const target = categories.find((c) => c.id === categoryId);
+    setCategories((prev) => prev.filter((c) => c.id !== categoryId));
+    addToast('Category Deleted', target ? `${target.name} removed` : 'Category removed', 'info');
+    deleteSupabaseCategory(categoryId).catch((err) => {
+      console.warn('Supabase category delete failed:', err);
+    });
+  };
+
+  // Blog / Journal CRUD
+  const addBlogPost = (input: Omit<BlogPost, 'id' | 'slug'> & { slug?: string }): BlogPost | null => {
+    const title = input.title.trim();
+    if (!title) {
+      addToast('Title required', 'Enter a blog title before saving', 'info');
+      return null;
+    }
+    if (!input.coverImage?.trim()) {
+      addToast('Cover image required', 'Add a cover image link', 'info');
+      return null;
+    }
+    const slug = uniqueSlug(input.slug?.trim() || title, blogPosts.map((p) => p.slug));
+    const newPost: BlogPost = {
+      id: `post-${Date.now().toString(36)}`,
+      slug,
+      title,
+      subtitle: (input.subtitle || '').trim(),
+      excerpt: (input.excerpt || '').trim() || title,
+      content: (input.content || []).map((p) => p.trim()).filter(Boolean),
+      category: input.category || 'Studio Craft',
+      author: {
+        name: input.author?.name?.trim() || 'Misty Bliss Studio',
+        role: input.author?.role?.trim() || 'Editor',
+        avatar:
+          input.author?.avatar?.trim() ||
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+      },
+      publishedDate:
+        input.publishedDate?.trim() ||
+        new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      readTime: input.readTime?.trim() || '3 min read',
+      coverImage: input.coverImage.trim(),
+      tags: input.tags || [],
+      featured: Boolean(input.featured),
+      relatedProductSlugs: input.relatedProductSlugs || [],
+    };
+
+    // Only one featured post at a time
+    setBlogPosts((prev) => {
+      const next = newPost.featured ? prev.map((p) => ({ ...p, featured: false })) : prev;
+      return [newPost, ...next];
+    });
+    addToast('Blog Post Created', `${newPost.title} is live in the Journal`);
+    upsertSupabaseBlogPost(newPost).catch((err) => console.warn('Supabase blog add failed:', err));
+    if (newPost.featured) {
+      blogPosts
+        .filter((p) => p.featured)
+        .forEach((p) => {
+          upsertSupabaseBlogPost({ ...p, featured: false }).catch(() => {});
+        });
+    }
+    return newPost;
+  };
+
+  const updateBlogPost = (updated: BlogPost) => {
+    const others = blogPosts.filter((p) => p.id !== updated.id).map((p) => p.slug);
+    const slug = uniqueSlug(updated.slug || updated.title, others);
+    const next: BlogPost = {
+      ...updated,
+      slug: slugify(slug) || updated.slug,
+      title: updated.title.trim(),
+      subtitle: (updated.subtitle || '').trim(),
+      excerpt: (updated.excerpt || '').trim(),
+      content: (updated.content || []).map((p) => p.trim()).filter(Boolean),
+      coverImage: updated.coverImage.trim(),
+      author: {
+        name: updated.author.name.trim() || 'Misty Bliss Studio',
+        role: updated.author.role.trim() || 'Editor',
+        avatar: updated.author.avatar.trim(),
+      },
+    };
+
+    setBlogPosts((prev) =>
+      prev.map((p) => {
+        if (p.id === next.id) return next;
+        if (next.featured) return { ...p, featured: false };
+        return p;
+      })
+    );
+    addToast('Blog Post Updated', `${next.title} saved`);
+    upsertSupabaseBlogPost(next).catch((err) => console.warn('Supabase blog update failed:', err));
+    if (next.featured) {
+      blogPosts
+        .filter((p) => p.id !== next.id && p.featured)
+        .forEach((p) => {
+          upsertSupabaseBlogPost({ ...p, featured: false }).catch(() => {});
+        });
+    }
+  };
+
+  const deleteBlogPost = (postId: string) => {
+    const target = blogPosts.find((p) => p.id === postId);
+    setBlogPosts((prev) => prev.filter((p) => p.id !== postId));
+    addToast('Blog Post Deleted', target ? `"${target.title}" removed` : 'Post removed', 'info');
+    deleteSupabaseBlogPost(postId).catch((err) => console.warn('Supabase blog delete failed:', err));
+  };
+
+  const refreshNewsletterSubscribers = useCallback(async () => {
+    const subs = await fetchSupabaseNewsletterSubscribers();
+    if (subs) setNewsletterSubscribers(subs);
+  }, []);
+
+  const deleteNewsletterSubscriber = (id: number | string) => {
+    const target = newsletterSubscribers.find((s) => s.id === id);
+    setNewsletterSubscribers((prev) => prev.filter((s) => s.id !== id));
+    addToast('Subscriber removed', target ? target.email : 'Email removed', 'info');
+    deleteSupabaseNewsletterSubscriber(id).catch((err) =>
+      console.warn('Supabase newsletter delete failed:', err)
+    );
   };
 
   // Admin Auth - Validates credentials configured in .env
@@ -830,6 +1138,22 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
         createPromoCode,
         togglePromoStatus,
         deletePromoCode,
+
+        categories,
+        addCategory,
+        updateCategory,
+        deleteCategory,
+
+        rooms,
+
+        blogPosts,
+        addBlogPost,
+        updateBlogPost,
+        deleteBlogPost,
+
+        newsletterSubscribers,
+        refreshNewsletterSubscribers,
+        deleteNewsletterSubscriber,
 
         isAdminLoggedIn,
         adminLogin,

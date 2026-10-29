@@ -12,7 +12,11 @@ export interface Product {
   slug: string;
   name: string;
   description: string;
+  /** Customer-facing sell price (shown on storefront). */
   price: number;
+  /** Internal purchase / cost price (admin only, never shown on storefront). */
+  purchasePrice?: number;
+  /** Original/list price when product is on discount (strikethrough on storefront). */
   compareAtPrice?: number;
   categorySlug: string;
   collectionSlugs: string[];
@@ -30,15 +34,20 @@ export interface Product {
   roomTypes: RoomType[];
 }
 
+export type CategoryImageSource = 'url' | 'file';
+
 export interface Category {
+  id: string;
   slug: string;
   name: string;
   shortName: string;
   description: string;
   image: string;
+  imageSource: CategoryImageSource;
 }
 
 export interface RoomCollection {
+  id: string;
   slug: RoomType;
   name: string;
   description: string;
@@ -141,6 +150,13 @@ export interface PromoCode {
   expiryDate: string;
 }
 
+export type BlogCategory =
+  | 'Studio Craft'
+  | 'Interior Styling'
+  | 'Material Studies'
+  | 'Botanical Notes'
+  | string;
+
 export interface BlogPost {
   id: string;
   slug: string;
@@ -148,7 +164,7 @@ export interface BlogPost {
   subtitle?: string;
   excerpt: string;
   content: string[];
-  category: 'Studio Craft' | 'Interior Styling' | 'Material Studies' | 'Botanical Notes';
+  category: BlogCategory;
   author: {
     name: string;
     role: string;
@@ -160,5 +176,19 @@ export interface BlogPost {
   tags: string[];
   featured?: boolean;
   relatedProductSlugs?: string[];
+}
+
+export const BLOG_CATEGORIES = [
+  'Studio Craft',
+  'Interior Styling',
+  'Material Studies',
+  'Botanical Notes',
+] as const;
+
+export interface NewsletterSubscriber {
+  id: number | string;
+  email: string;
+  source: string;
+  createdAt: string;
 }
 

@@ -8,12 +8,11 @@ import {
   Search,
   Heart,
   ShoppingBag,
-  User,
+  // User, // Account icon — kept for future
   Menu,
   X,
   ChevronDown,
 } from 'lucide-react';
-import { CATEGORIES } from '../../data/mockData';
 import { MistyBlissIcon } from '../common/MistyBlissIcon';
 import { MobileMenuDrawer } from './MobileMenuDrawer';
 
@@ -23,10 +22,11 @@ export const Header: React.FC = () => {
     cartCount,
     wishlistCount,
     openCartDrawer,
-    openAccountModal,
+    // openAccountModal, // Account icon — kept for future
     isMobileMenuOpen,
     toggleMobileMenu,
     closeMobileMenu,
+    categories,
   } = useShop();
 
   const [categoriesDropdownOpen, setCategoriesDropdownOpen] = useState(false);
@@ -162,7 +162,7 @@ export const Header: React.FC = () => {
 
               {categoriesDropdownOpen && (
                 <div className="absolute top-full -left-12 w-[520px] bg-white rounded-xl shadow-xl border border-[#E9E3DE] p-5 grid grid-cols-2 gap-3 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                  {CATEGORIES.slice(0, 10).map((cat) => (
+                  {categories.slice(0, 10).map((cat) => (
                     <Link
                       key={cat.slug}
                       href={`/categories/${cat.slug}`}
@@ -191,7 +191,7 @@ export const Header: React.FC = () => {
                       onClick={() => setCategoriesDropdownOpen(false)}
                       className="text-[#C77F79] font-medium hover:underline cursor-pointer"
                     >
-                      View All 12 Categories →
+                      View All {categories.length} Categories →
                     </Link>
                     <span className="text-[#77716C]">Handcrafted with natural materials</span>
                   </div>
@@ -222,7 +222,7 @@ export const Header: React.FC = () => {
               </form>
             </div>
 
-            {/* Account Modal Trigger */}
+            {/* Account Modal Trigger — kept for future
             <button
               type="button"
               onClick={openAccountModal}
@@ -232,6 +232,7 @@ export const Header: React.FC = () => {
             >
               <User className="w-4 h-4" />
             </button>
+            */}
 
             {/* Wishlist Link with Live Count */}
             <Link
@@ -279,7 +280,7 @@ export const Header: React.FC = () => {
             >
               All Décor
             </Link>
-            {CATEGORIES.slice(0, 10).map((cat) => (
+            {categories.slice(0, 10).map((cat) => (
               <Link
                 key={cat.slug}
                 href={`/categories/${cat.slug}`}
@@ -287,7 +288,7 @@ export const Header: React.FC = () => {
                   route.slug === cat.slug ? 'text-[#C77F79] font-semibold' : ''
                 }`}
               >
-                {cat.name}
+                {cat.shortName || cat.name}
               </Link>
             ))}
           </div>

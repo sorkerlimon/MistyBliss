@@ -3,11 +3,10 @@
 import React, { useEffect } from 'react';
 import { useRouter } from '../../context/RouterContext';
 import { useShop } from '../../context/ShopContext';
-import { CATEGORIES } from '../../data/mockData';
 
 export const SEO: React.FC = () => {
   const { route } = useRouter();
-  const { products } = useShop();
+  const { products, categories } = useShop();
 
   useEffect(() => {
     let title = 'Misty Bliss – Artisanal Home Décor & Modern Living';
@@ -128,7 +127,7 @@ export const SEO: React.FC = () => {
       }
 
       case 'category': {
-        const cat = CATEGORIES.find((c) => c.slug === route.slug);
+        const cat = categories.find((c) => c.slug === route.slug);
         const catName = cat ? cat.name : 'Category Collection';
         title = `${catName} – Artisanal Home Décor | Misty Bliss`;
         description = `Browse our handcrafted collection of ${catName.toLowerCase()}, meticulously curated with natural materials and timeless forms.`;
@@ -257,7 +256,7 @@ export const SEO: React.FC = () => {
     } else if (scriptTag) {
       scriptTag.remove();
     }
-  }, [route, products]);
+  }, [route, products, categories]);
 
   return null;
 };

@@ -1,5 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
-import { Product, Order, PromoCode, OrderStatus } from '../types';
+import {
+  Product,
+  Order,
+  PromoCode,
+  OrderStatus,
+  Category,
+  CategoryImageSource,
+  RoomCollection,
+  RoomType,
+  BlogPost,
+  NewsletterSubscriber,
+} from '../types';
 
 // Read Supabase credentials with priority cascade:
 // 1. import.meta.env.NEXT_PUBLIC_SUPABASE_URL / VITE_SUPABASE_URL
@@ -45,6 +56,9 @@ export interface ConnectionTestResult {
     orders: boolean;
     promo_codes: boolean;
     newsletter_subscribers: boolean;
+    categories: boolean;
+    rooms: boolean;
+    blog_posts: boolean;
   };
 }
 
@@ -75,18 +89,25 @@ export async function testSupabaseConnection(): Promise<ConnectionTestResult> {
     }
 
     // 2. Probe tables to check if database schema has been deployed
-    const [productsProbe, ordersProbe, promosProbe, subscribersProbe] = await Promise.allSettled([
-      supabase.from('products').select('id').limit(1),
-      supabase.from('orders').select('id').limit(1),
-      supabase.from('promo_codes').select('id').limit(1),
-      supabase.from('newsletter_subscribers').select('id').limit(1),
-    ]);
+    const [productsProbe, ordersProbe, promosProbe, subscribersProbe, categoriesProbe, roomsProbe, blogProbe] =
+      await Promise.allSettled([
+        supabase.from('products').select('id').limit(1),
+        supabase.from('orders').select('id').limit(1),
+        supabase.from('promo_codes').select('id').limit(1),
+        supabase.from('newsletter_subscribers').select('id').limit(1),
+        supabase.from('categories').select('id').limit(1),
+        supabase.from('rooms').select('id').limit(1),
+        supabase.from('blog_posts').select('id').limit(1),
+      ]);
 
     const tablesStatus = {
       products: productsProbe.status === 'fulfilled' && !productsProbe.value.error,
       orders: ordersProbe.status === 'fulfilled' && !ordersProbe.value.error,
       promo_codes: promosProbe.status === 'fulfilled' && !promosProbe.value.error,
       newsletter_subscribers: subscribersProbe.status === 'fulfilled' && !subscribersProbe.value.error,
+      categories: categoriesProbe.status === 'fulfilled' && !categoriesProbe.value.error,
+      rooms: roomsProbe.status === 'fulfilled' && !roomsProbe.value.error,
+      blog_posts: blogProbe.status === 'fulfilled' && !blogProbe.value.error,
     };
 
     const hasAnyTable = Object.values(tablesStatus).some(Boolean);
@@ -109,6 +130,32 @@ export async function testSupabaseConnection(): Promise<ConnectionTestResult> {
   }
 }
 
+function mapProductRow(item: any): Product {
+  return {
+    id: item.id,
+    slug: item.slug || item.id,
+    name: item.name,
+    description: item.description || '',
+    price: Number(item.price),
+    purchasePrice: item.purchase_price != null ? Number(item.purchase_price) : undefined,
+    compareAtPrice: item.compare_at_price ? Number(item.compare_at_price) : undefined,
+    categorySlug: item.category_slug,
+    collectionSlugs: item.collection_slugs || ['living-room'],
+    images: Array.isArray(item.images) ? item.images : [item.image_url || ''],
+    material: item.material || 'Artisanal Natural Material',
+    colors: item.colors || [{ name: 'Natural', hex: '#EAE5DC' }],
+    dimensions: item.dimensions || 'H 20cm × Dia 15cm',
+    stockStatus: item.stock_status || 'in_stock',
+    isNew: Boolean(item.is_new),
+    isBestseller: Boolean(item.is_bestseller),
+    isFeatured: Boolean(item.is_featured),
+    rating: Number(item.rating || 4.9),
+    reviewCount: Number(item.review_count || 12),
+    careInstructions: item.care_instructions || 'Wipe with soft clean cloth.',
+    roomTypes: item.room_types || ['living-room'],
+  };
+}
+
 /**
  * Fetch products from Supabase 'products' table
  */
@@ -123,31 +170,73 @@ export async function fetchSupabaseProducts(): Promise<Product[] | null> {
       return null;
     }
 
-    // Map database snake_case columns to TypeScript Product type
-    return data.map((item: any) => ({
-      id: item.id,
-      slug: item.slug || item.id,
-      name: item.name,
-      description: item.description || '',
-      price: Number(item.price),
-      compareAtPrice: item.compare_at_price ? Number(item.compare_at_price) : undefined,
-      categorySlug: item.category_slug,
-      collectionSlugs: item.collection_slugs || ['living-room'],
-      images: Array.isArray(item.images) ? item.images : [item.image_url || ''],
-      material: item.material || 'Artisanal Natural Material',
-      colors: item.colors || [{ name: 'Natural', hex: '#EAE5DC' }],
-      dimensions: item.dimensions || 'H 20cm × Dia 15cm',
-      stockStatus: item.stock_status || 'in_stock',
-      isNew: Boolean(item.is_new),
-      isBestseller: Boolean(item.is_bestseller),
-      isFeatured: Boolean(item.is_featured),
-      rating: Number(item.rating || 4.9),
-      reviewCount: Number(item.review_count || 12),
-      careInstructions: item.care_instructions || 'Wipe with soft clean cloth.',
-      roomTypes: item.room_types || ['living-room'],
-    }));
+    return data.map(mapProductRow);
   } catch (err) {
     console.warn('Supabase products fetch skipped:', err);
+    return null;
+  }
+}
+
+/**
+ * Upsert a full product list into Supabase (catalog seed / sync).
+ */
+export async function upsertSupabaseProducts(products: Product[]): Promise<number> {
+  if (!products.length) return 0;
+  try {
+    const payload = products.map((product) => ({
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      purchase_price: product.purchasePrice ?? null,
+      compare_at_price: product.compareAtPrice || null,
+      category_slug: product.categorySlug,
+      collection_slugs: product.collectionSlugs,
+      images: product.images,
+      material: product.material,
+      colors: product.colors,
+      dimensions: product.dimensions,
+      stock_status: product.stockStatus,
+      is_new: product.isNew,
+      is_bestseller: product.isBestseller,
+      is_featured: product.isFeatured,
+      rating: product.rating,
+      review_count: product.reviewCount,
+      care_instructions: product.careInstructions,
+      room_types: product.roomTypes,
+      updated_at: new Date().toISOString(),
+    }));
+
+    const { error } = await supabase.from('products').upsert(payload, { onConflict: 'id' });
+    if (error) {
+      console.warn('Supabase bulk upsert products error:', error.message);
+      return 0;
+    }
+    return products.length;
+  } catch (err) {
+    console.warn('Supabase bulk upsert products failed:', err);
+    return 0;
+  }
+}
+
+/**
+ * Ensure the products table holds the full catalog, then return DB products.
+ * Seeds when empty or when the remote count is behind the provided catalog.
+ */
+export async function ensureSupabaseProductsCatalog(catalog: Product[]): Promise<Product[] | null> {
+  try {
+    const existing = await fetchSupabaseProducts();
+    const remoteCount = existing?.length ?? 0;
+
+    if (remoteCount < catalog.length) {
+      await upsertSupabaseProducts(catalog);
+      return (await fetchSupabaseProducts()) ?? existing;
+    }
+
+    return existing;
+  } catch (err) {
+    console.warn('ensureSupabaseProductsCatalog failed:', err);
     return null;
   }
 }
@@ -163,6 +252,7 @@ export async function upsertSupabaseProduct(product: Product): Promise<boolean> 
       name: product.name,
       description: product.description,
       price: product.price,
+      purchase_price: product.purchasePrice ?? null,
       compare_at_price: product.compareAtPrice || null,
       category_slug: product.categorySlug,
       collection_slugs: product.collectionSlugs,
@@ -301,6 +391,248 @@ export async function deleteSupabaseOrder(orderId: string): Promise<boolean> {
 }
 
 /**
+ * Fetch rooms from Supabase
+ */
+export async function fetchSupabaseRooms(): Promise<RoomCollection[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('rooms')
+      .select('*')
+      .order('sort_order', { ascending: true });
+
+    if (error || !data) return null;
+
+    return data.map((item: any) => ({
+      id: item.id,
+      slug: item.slug as RoomType,
+      name: item.name,
+      description: item.description || '',
+      image: item.image || '',
+    }));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Upsert rooms into Supabase (seed / sync).
+ */
+export async function upsertSupabaseRooms(rooms: RoomCollection[]): Promise<number> {
+  if (!rooms.length) return 0;
+  try {
+    const payload = rooms.map((room, index) => ({
+      id: room.id,
+      slug: room.slug,
+      name: room.name,
+      description: room.description || '',
+      image: room.image,
+      sort_order: index + 1,
+      updated_at: new Date().toISOString(),
+    }));
+    const { error } = await supabase.from('rooms').upsert(payload, { onConflict: 'id' });
+    if (error) {
+      console.warn('Supabase upsert rooms error:', error.message);
+      return 0;
+    }
+    return rooms.length;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Ensure rooms table is seeded, then return DB rooms.
+ */
+export async function ensureSupabaseRoomsCatalog(catalog: RoomCollection[]): Promise<RoomCollection[] | null> {
+  try {
+    const existing = await fetchSupabaseRooms();
+    const remoteCount = existing?.length ?? 0;
+    if (remoteCount < catalog.length) {
+      await upsertSupabaseRooms(catalog);
+      return (await fetchSupabaseRooms()) ?? existing;
+    }
+    return existing;
+  } catch {
+    return null;
+  }
+}
+
+function mapBlogRow(item: any): BlogPost {
+  return {
+    id: item.id,
+    slug: item.slug,
+    title: item.title,
+    subtitle: item.subtitle || '',
+    excerpt: item.excerpt || '',
+    content: Array.isArray(item.content) ? item.content : [],
+    category: item.category || 'Studio Craft',
+    author: {
+      name: item.author_name || 'Misty Bliss Studio',
+      role: item.author_role || 'Editor',
+      avatar:
+        item.author_avatar ||
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+    },
+    publishedDate: item.published_date || '',
+    readTime: item.read_time || '3 min read',
+    coverImage: item.cover_image || '',
+    tags: Array.isArray(item.tags) ? item.tags : [],
+    featured: Boolean(item.featured),
+    relatedProductSlugs: Array.isArray(item.related_product_slugs) ? item.related_product_slugs : [],
+  };
+}
+
+/**
+ * Fetch blog posts from Supabase
+ */
+export async function fetchSupabaseBlogPosts(): Promise<BlogPost[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error || !data) return null;
+    return data.map(mapBlogRow);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Upsert blog post in Supabase
+ */
+export async function upsertSupabaseBlogPost(post: BlogPost): Promise<boolean> {
+  try {
+    const payload = {
+      id: post.id,
+      slug: post.slug,
+      title: post.title,
+      subtitle: post.subtitle || '',
+      excerpt: post.excerpt || '',
+      content: post.content || [],
+      category: post.category,
+      author_name: post.author.name,
+      author_role: post.author.role,
+      author_avatar: post.author.avatar,
+      published_date: post.publishedDate,
+      read_time: post.readTime,
+      cover_image: post.coverImage,
+      tags: post.tags || [],
+      featured: Boolean(post.featured),
+      related_product_slugs: post.relatedProductSlugs || [],
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = await supabase.from('blog_posts').upsert(payload, { onConflict: 'id' });
+    if (error) {
+      console.warn('Supabase upsertBlogPost error:', error.message);
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Delete blog post in Supabase
+ */
+export async function deleteSupabaseBlogPost(postId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('blog_posts').delete().eq('id', postId);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Ensure blog posts table is seeded, then return DB posts.
+ */
+export async function ensureSupabaseBlogCatalog(catalog: BlogPost[]): Promise<BlogPost[] | null> {
+  try {
+    const existing = await fetchSupabaseBlogPosts();
+    const remoteCount = existing?.length ?? 0;
+    if (remoteCount < catalog.length) {
+      for (const post of catalog) {
+        await upsertSupabaseBlogPost(post);
+      }
+      return (await fetchSupabaseBlogPosts()) ?? existing;
+    }
+    return existing;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch categories from Supabase
+ */
+export async function fetchSupabaseCategories(): Promise<Category[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('sort_order', { ascending: true });
+
+    if (error || !data) return null;
+
+    return data.map((item: any) => ({
+      id: item.id,
+      slug: item.slug,
+      name: item.name,
+      shortName: item.short_name || item.name,
+      description: item.description || '',
+      image: item.image || '',
+      imageSource: (item.image_source === 'file' ? 'file' : 'url') as CategoryImageSource,
+    }));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Upsert category in Supabase
+ */
+export async function upsertSupabaseCategory(category: Category, sortOrder = 0): Promise<boolean> {
+  try {
+    const payload = {
+      id: category.id,
+      slug: category.slug,
+      name: category.name,
+      short_name: category.shortName,
+      description: category.description || '',
+      image: category.image,
+      image_source: category.imageSource || 'url',
+      sort_order: sortOrder,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase.from('categories').upsert(payload, { onConflict: 'id' });
+    if (error) {
+      console.warn('Supabase upsertCategory error:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Supabase upsertCategory failed:', err);
+    return false;
+  }
+}
+
+/**
+ * Delete category in Supabase
+ */
+export async function deleteSupabaseCategory(categoryId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('categories').delete().eq('id', categoryId);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Fetch promo codes from Supabase
  */
 export async function fetchSupabasePromoCodes(): Promise<PromoCode[] | null> {
@@ -362,6 +694,49 @@ export async function recordNewsletterSubscriber(email: string, source: string =
       },
       { onConflict: 'email' }
     );
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fetch newsletter subscribers (newest first)
+ */
+export async function fetchSupabaseNewsletterSubscribers(): Promise<NewsletterSubscriber[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('newsletter_subscribers')
+      .select('id, email, source, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error || !data) return null;
+
+    return data.map((item: any) => ({
+      id: item.id,
+      email: item.email,
+      source: item.source || 'footer',
+      createdAt: item.created_at
+        ? new Date(item.created_at).toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+          })
+        : '',
+    }));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Delete a newsletter subscriber by id
+ */
+export async function deleteSupabaseNewsletterSubscriber(id: number | string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('newsletter_subscribers').delete().eq('id', id);
     return !error;
   } catch {
     return false;

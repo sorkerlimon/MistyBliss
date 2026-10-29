@@ -5,14 +5,12 @@ import { useRouter } from '../context/RouterContext';
 import { useShop } from '../context/ShopContext';
 import { ProductCard } from '../components/product/ProductCard';
 import { Search, X, SlidersHorizontal, ArrowUpDown, Sparkles, Check } from 'lucide-react';
-import { CATEGORIES } from '../data/mockData';
-
 type SortOption = 'relevance' | 'price-asc' | 'price-desc' | 'rating' | 'newest';
 type PriceFilter = 'all' | 'under-40' | '40-75' | '75-120' | 'over-120';
 
 export const SearchPage: React.FC = () => {
   const { route, navigate } = useRouter();
-  const { products } = useShop();
+  const { products, categories } = useShop();
   const initialQuery = route.searchParams.q || '';
   
   const [query, setQuery] = useState(initialQuery);
@@ -216,7 +214,7 @@ export const SearchPage: React.FC = () => {
             >
               All Categories
             </button>
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat.slug}
                 onClick={() => setSelectedCategory(cat.slug)}
