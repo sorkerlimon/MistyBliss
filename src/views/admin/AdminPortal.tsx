@@ -4,15 +4,34 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useShop } from '../../context/ShopContext';
 import { MistyBlissIcon } from '../../components/common/MistyBlissIcon';
-import { Eye, EyeOff, ShieldCheck, Package, ShoppingCart, Tag, FolderTree, BookOpen, Mail } from 'lucide-react';
+import {
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  Package,
+  ShoppingCart,
+  Tag,
+  FolderTree,
+  BookOpen,
+  Mail,
+  LayoutDashboard,
+} from 'lucide-react';
 import { cleanCredential } from '../../lib/adminConfig';
 import { CategoryAdminPanel } from './CategoryAdminPanel';
 import { ProductAdminPanel } from './ProductAdminPanel';
 import { PromoAdminPanel } from './PromoAdminPanel';
 import { BlogAdminPanel } from './BlogAdminPanel';
 import { NewsletterAdminPanel } from './NewsletterAdminPanel';
+import { AdminDashboard } from './AdminDashboard';
 
-type AdminTab = 'orders' | 'products' | 'promos' | 'categories' | 'blog' | 'subscribers';
+type AdminTab =
+  | 'dashboard'
+  | 'orders'
+  | 'products'
+  | 'promos'
+  | 'categories'
+  | 'blog'
+  | 'subscribers';
 
 export const AdminPortal: React.FC = () => {
   const {
@@ -33,9 +52,17 @@ export const AdminPortal: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState<AdminTab>('orders');
+  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+
+  const pendingCount = orders.filter((o) => o.status === 'pending').length;
 
   const navItems: { id: AdminTab; label: string; count: number; icon: React.ReactNode }[] = [
+    {
+      id: 'dashboard',
+      label: 'Dashboard',
+      count: pendingCount,
+      icon: <LayoutDashboard className="w-3.5 h-3.5" />,
+    },
     { id: 'orders', label: 'Orders', count: orders.length, icon: <ShoppingCart className="w-3.5 h-3.5" /> },
     { id: 'categories', label: 'Categories', count: categories.length, icon: <FolderTree className="w-3.5 h-3.5" /> },
     { id: 'products', label: 'Products', count: products.length, icon: <Package className="w-3.5 h-3.5" /> },
@@ -226,6 +253,12 @@ export const AdminPortal: React.FC = () => {
 
           {/* Main content fills remaining width */}
           <main className="flex-1 min-w-0 w-full">
+            {activeTab === 'dashboard' && (
+              <AdminDashboard
+                onNavigate={(tab) => setActiveTab(tab)}
+              />
+            )}
+
             {activeTab === 'orders' && (
               <div className="space-y-4">
                 <div>
