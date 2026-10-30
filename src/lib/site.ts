@@ -1,10 +1,10 @@
 /** Canonical production domain (also used for sitemap, robots, OG, JSON-LD). */
-export const SITE_URL = 'https://mistybliss.com';
+export const SITE_URL = 'https://mistybliss.online';
 
 export const SITE_NAME = 'Misty Bliss';
 
 export const SITE_PHONE = '+8801571376061';
-export const SITE_EMAIL = 'concierge@mistybliss.com';
+export const SITE_EMAIL = 'concierge@mistybliss.online';
 export const SITE_WHATSAPP = '8801571376061';
 
 /** Primary SEO keywords aligned with Bangladesh home-decor search intent */

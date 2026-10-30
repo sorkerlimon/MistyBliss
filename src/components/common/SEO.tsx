@@ -14,8 +14,8 @@ export const SEO: React.FC = () => {
       'Shop luxury home decor online in Bangladesh at Misty Bliss. Buy ceramics, vases, lighting, wall decor, cushions, candles & stylish home decoration items with WhatsApp support.';
     let jsonLd: object | null = null;
 
-    const currentUrl = typeof window !== 'undefined' ? window.location.href : 'https://mistybliss.com';
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://mistybliss.com';
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : 'https://mistybliss.online';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://mistybliss.online';
 
     switch (route.type) {
       case 'home':

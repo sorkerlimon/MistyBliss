@@ -43,6 +43,7 @@ export const AdminPortal: React.FC = () => {
     newsletterSubscribers,
     isAdminLoggedIn,
     adminLogin,
+    completeAdminSession,
     adminLogout,
     updateOrderStatus,
   } = useShop();
@@ -53,6 +54,16 @@ export const AdminPortal: React.FC = () => {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+  const [sessionEmail, setSessionEmail] = useState('');
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      setSessionEmail(localStorage.getItem('misty_bliss_admin_email') || '');
+    } catch {
+      setSessionEmail('');
+    }
+  }, [isAdminLoggedIn]);
 
   const pendingCount = orders.filter((o) => o.status === 'pending').length;
 
@@ -83,27 +94,31 @@ export const AdminPortal: React.FC = () => {
 
     const cleanedEmail = cleanCredential(email);
     const cleanedPass = cleanCredential(password);
+    let success = false;
 
-    // 1. First attempt context adminLogin
-    let success = adminLogin(cleanedEmail, cleanedPass);
-
-    // 2. Fallback to API route check if needed
-    if (!success) {
-      try {
-        const res = await fetch('/api/admin/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: cleanedEmail, password: cleanedPass }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success) {
-            success = adminLogin(cleanedEmail, cleanedPass) || true;
-          }
+    // Prefer server-side check (ADMIN_EMAIL / ADMIN_PASSWORD from env or Worker secrets)
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanedEmail, password: cleanedPass }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          completeAdminSession(data.email || cleanedEmail);
+          setSessionEmail((data.email || cleanedEmail).toLowerCase());
+          success = true;
         }
-      } catch (apiErr) {
-        console.warn('API login check fallback failed:', apiErr);
       }
+    } catch (apiErr) {
+      console.warn('API login check failed:', apiErr);
+    }
+
+    // Local fallback only when env credentials are available in the client bundle
+    if (!success) {
+      success = adminLogin(cleanedEmail, cleanedPass);
+      if (success) setSessionEmail(cleanedEmail.toLowerCase());
     }
 
     setIsSubmitting(false);
@@ -206,7 +221,7 @@ export const AdminPortal: React.FC = () => {
           <div className="flex items-center gap-2 sm:gap-3 text-xs shrink-0">
             <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#EFECE6] text-[#292522] font-mono text-[11px] border border-[#E9E3DE]">
               <ShieldCheck size={12} className="text-[#89947D]" />
-              limon@technobd.com
+              {sessionEmail || 'Admin'}
             </span>
             <Link href="/" className="text-[#77716C] hover:text-[#292522]">
               Storefront

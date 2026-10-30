@@ -173,7 +173,7 @@ export default function RootLayout({
         name: 'Where can I buy home decor online in Bangladesh?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Misty Bliss is an online home decor store in Bangladesh offering ceramics, vases, lighting, wall decor, cushions, candles, and stylish interior accessories. Shop at mistybliss.com or message us on WhatsApp for quick ordering help.',
+          text: 'Misty Bliss is an online home decor store in Bangladesh offering ceramics, vases, lighting, wall decor, cushions, candles, and stylish interior accessories. Shop at mistybliss.online or message us on WhatsApp for quick ordering help.',
         },
       },
       {
@@ -189,7 +189,7 @@ export default function RootLayout({
         name: 'How do I order from Misty Bliss?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: `Browse products on mistybliss.com and contact us on WhatsApp at ${SITE_PHONE} for order confirmation, pricing, and delivery support anywhere in Bangladesh.`,
+          text: `Browse products on mistybliss.online and contact us on WhatsApp at ${SITE_PHONE} for order confirmation, pricing, and delivery support anywhere in Bangladesh.`,
         },
       },
       {

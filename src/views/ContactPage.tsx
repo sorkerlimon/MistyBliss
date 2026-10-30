@@ -46,7 +46,7 @@ export const ContactPage: React.FC = () => {
 
             <div className="flex items-center gap-3">
               <Mail className="w-4 h-4 text-[#C77F79] shrink-0" />
-              <p>concierge@mistybliss.com</p>
+              <p>concierge@mistybliss.online</p>
             </div>
 
             <div className="flex items-center gap-3">

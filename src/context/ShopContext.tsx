@@ -44,7 +44,7 @@ import {
   deleteSupabaseNewsletterSubscriber,
   ConnectionTestResult,
 } from '../lib/supabase';
-import { getAdminCredentials, validateAdminCredentials } from '../lib/adminConfig';
+import { validateAdminCredentials } from '../lib/adminConfig';
 import { slugify, uniqueSlug } from '../lib/slug';
 
 interface PromoDiscount {
@@ -138,6 +138,7 @@ interface ShopContextType {
   // Admin Auth
   isAdminLoggedIn: boolean;
   adminLogin: (email: string, pass: string) => boolean;
+  completeAdminSession: (email: string) => void;
   adminLogout: () => void;
 
   // Supabase Database Integration
@@ -903,23 +904,32 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
   };
 
-  // Admin Auth - Validates credentials configured in .env
-  const adminLogin = (email: string, pass: string): boolean => {
-    if (validateAdminCredentials(email, pass)) {
-      setIsAdminLoggedIn(true);
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem(ADMIN_AUTH_KEY, 'true');
-          localStorage.setItem('misty_bliss_admin_email', email.trim().toLowerCase());
-        } catch (e) {
-          console.warn('Could not persist admin session', e);
-        }
+  const persistAdminSession = (email: string) => {
+    setIsAdminLoggedIn(true);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(ADMIN_AUTH_KEY, 'true');
+        localStorage.setItem('misty_bliss_admin_email', email.trim().toLowerCase());
+      } catch (e) {
+        console.warn('Could not persist admin session', e);
       }
-      const creds = getAdminCredentials();
-      addToast('Welcome Admin', `Signed in as ${creds.email}`);
-      return true;
     }
-    return false;
+  };
+
+  // Admin Auth — env credentials only (no hardcoded fallbacks)
+  const adminLogin = (email: string, pass: string): boolean => {
+    if (!validateAdminCredentials(email, pass)) return false;
+    const normalized = email.trim().toLowerCase();
+    persistAdminSession(normalized);
+    addToast('Welcome Admin', `Signed in as ${normalized}`);
+    return true;
+  };
+
+  /** Mark admin session after server `/api/admin/login` succeeds */
+  const completeAdminSession = (email: string) => {
+    const normalized = email.trim().toLowerCase();
+    persistAdminSession(normalized);
+    addToast('Welcome Admin', `Signed in as ${normalized}`);
   };
 
   const adminLogout = () => {
@@ -1157,6 +1167,7 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         isAdminLoggedIn,
         adminLogin,
+        completeAdminSession,
         adminLogout,
 
         isSupabaseConfigured,

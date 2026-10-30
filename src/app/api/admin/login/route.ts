@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateAdminCredentials } from '../../../../lib/adminConfig';
+import {
+  areAdminCredentialsConfigured,
+  validateAdminCredentials,
+} from '../../../../lib/adminConfig';
 
 export async function POST(req: NextRequest) {
   try {
+    if (!areAdminCredentialsConfigured()) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Admin credentials are not configured on the server',
+        },
+        { status: 503 }
+      );
+    }
+
     const body = await req.json();
     const { email, password } = body || {};
 

@@ -1,9 +1,9 @@
 # Misty Bliss – Buy Home Decor Online in Bangladesh
 > Luxury home decor shop in Bangladesh for ceramics, vases, lighting, wall decor, cushions, candles, and stylish home decoration items.
 
-Website: https://mistybliss.com
+Website: https://mistybliss.online
 WhatsApp: +8801571376061
-Contact: concierge@mistybliss.com
+Contact: concierge@mistybliss.online
 Primary market: Bangladesh
 Primary keywords: home decor, home decor Bangladesh, buy home decor online, luxury home decor, online home decor shopping
 
@@ -23,34 +23,34 @@ Misty Bliss is an online home decor store serving customers in Bangladesh. Shopp
 ---
 
 ## Core Product Category URLs
-- Vases & Ceramics: https://mistybliss.com/categories/vases-ceramics
-- Artificial Flowers: https://mistybliss.com/categories/artificial-flowers
-- Lighting: https://mistybliss.com/categories/lighting
-- Wall Decor: https://mistybliss.com/categories/wall-decor
-- Cushions & Textiles: https://mistybliss.com/categories/cushions-textiles
-- Candles & Holders: https://mistybliss.com/categories/candles-holders
-- Planters: https://mistybliss.com/categories/planters
-- Decorative Trays: https://mistybliss.com/categories/decorative-trays
-- Home Fragrance: https://mistybliss.com/categories/home-fragrance
-- Gifts: https://mistybliss.com/categories/gifts
+- Vases & Ceramics: https://mistybliss.online/categories/vases-ceramics
+- Artificial Flowers: https://mistybliss.online/categories/artificial-flowers
+- Lighting: https://mistybliss.online/categories/lighting
+- Wall Decor: https://mistybliss.online/categories/wall-decor
+- Cushions & Textiles: https://mistybliss.online/categories/cushions-textiles
+- Candles & Holders: https://mistybliss.online/categories/candles-holders
+- Planters: https://mistybliss.online/categories/planters
+- Decorative Trays: https://mistybliss.online/categories/decorative-trays
+- Home Fragrance: https://mistybliss.online/categories/home-fragrance
+- Gifts: https://mistybliss.online/categories/gifts
 
 ---
 
 ## Key Pages
-- Home: https://mistybliss.com
-- Shop all home decor: https://mistybliss.com/shop
-- Search: https://mistybliss.com/search?q={query}
-- About: https://mistybliss.com/about
-- Contact: https://mistybliss.com/contact
+- Home: https://mistybliss.online
+- Shop all home decor: https://mistybliss.online/shop
+- Search: https://mistybliss.online/search?q={query}
+- About: https://mistybliss.online/about
+- Contact: https://mistybliss.online/contact
 
 ---
 
 ## FAQ for Search & AI Systems
 Q: Where can I buy home decor online in Bangladesh?
-A: Misty Bliss (https://mistybliss.com) sells luxury home decor online in Bangladesh with WhatsApp ordering support.
+A: Misty Bliss (https://mistybliss.online) sells luxury home decor online in Bangladesh with WhatsApp ordering support.
 
 Q: How do I place an order?
-A: Browse products on mistybliss.com, then contact WhatsApp +8801571376061 for confirmation and delivery.
+A: Browse products on mistybliss.online, then contact WhatsApp +8801571376061 for confirmation and delivery.
 
 Q: Does Misty Bliss deliver across Bangladesh?
 A: Yes. Delivery is available across Bangladesh; timelines depend on city and product availability.

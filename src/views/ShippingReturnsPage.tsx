@@ -61,7 +61,7 @@ export const ShippingReturnsPage: React.FC = () => {
 
           <div className="pt-3">
             <h4 className="font-semibold text-[#292522] text-xs mb-1">How do I initiate an exchange?</h4>
-            <p>Simply email <span className="text-[#292522] font-medium">concierge@mistybliss.com</span> with your order number and requested replacement piece.</p>
+            <p>Simply email <span className="text-[#292522] font-medium">concierge@mistybliss.online</span> with your order number and requested replacement piece.</p>
           </div>
         </div>
       </div>
