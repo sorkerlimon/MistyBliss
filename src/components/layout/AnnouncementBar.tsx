@@ -19,12 +19,12 @@ export const AnnouncementBar: React.FC = () => {
           
           {/* Mobile concise message */}
           <span className="sm:hidden text-[11px] leading-tight truncate">
-            <strong className="font-semibold">Spring Promo:</strong> Free shipping over $75 · Code: <span className="font-mono font-semibold text-[#292522]">BLISS15</span>
+            <strong className="font-semibold">Spring Promo:</strong> Free shipping over ৳75 · Code: <span className="font-mono font-semibold text-[#292522]">BLISS15</span>
           </span>
 
           {/* Desktop full message */}
           <span className="hidden sm:inline">
-            <strong className="font-semibold">Spring Home Collection:</strong> Free shipping on qualifying orders over $75
+            <strong className="font-semibold">Spring Home Collection:</strong> Free shipping on qualifying orders over ৳75
           </span>
           <span className="hidden md:inline text-[#77716C]">·</span>
           <span className="hidden md:inline text-[#77716C]">

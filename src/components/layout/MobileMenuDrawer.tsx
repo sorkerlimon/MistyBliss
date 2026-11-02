@@ -118,7 +118,7 @@ export const MobileMenuDrawer: React.FC = () => {
           <div className="px-4 py-2 bg-[#F1E5E1] text-[11px] text-[#292522] flex items-center justify-between border-b border-[#E9E3DE]">
             <span className="flex items-center gap-1.5 font-medium">
               <Sparkles className="w-3 h-3 text-[#C77F79]" />
-              Free shipping over $75
+              Free shipping over ৳75
             </span>
             <span className="font-mono font-semibold bg-[#FAF8F5] px-1.5 py-0.5 rounded text-[10px] border border-[#E9E3DE]">
               BLISS15

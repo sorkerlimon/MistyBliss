@@ -6,6 +6,7 @@ import { useRouter } from '../context/RouterContext';
 import { useShop } from '../context/ShopContext';
 import { ProductImage } from '../components/common/ProductImage';
 import { Plus, Minus, Trash2, ArrowRight, ShoppingBag, Tag, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Money } from '../components/common/Money';
 
 export const CartPage: React.FC = () => {
   const { navigate } = useRouter();
@@ -105,7 +106,7 @@ export const CartPage: React.FC = () => {
             <div className="flex justify-between items-center text-xs">
               {amountNeededForFreeShipping > 0 ? (
                 <p className="text-[#292522]">
-                  Add <span className="font-semibold text-[#C77F79]">${amountNeededForFreeShipping.toFixed(2)}</span> more to qualify for <span className="font-semibold">Free Delivery</span>
+                  Add <span className="font-semibold text-[#C77F79]"><Money amount={amountNeededForFreeShipping} className="font-semibold text-[#C77F79]" /></span> more to qualify for <span className="font-semibold">Free Delivery</span>
                 </p>
               ) : (
                 <p className="text-[#89947D] font-semibold flex items-center gap-1.5">
@@ -114,7 +115,7 @@ export const CartPage: React.FC = () => {
                 </p>
               )}
               <span className="text-[11px] text-[#77716C] font-mono tabular-nums">
-                ${cartSubtotal.toFixed(2)} / ${freeShippingThreshold}
+                <><Money amount={cartSubtotal} /> / <Money amount={freeShippingThreshold} /></>
               </span>
             </div>
             <div className="w-full bg-[#FAF8F5] h-2 rounded-full overflow-hidden border border-[#E9E3DE]">
@@ -164,9 +165,6 @@ export const CartPage: React.FC = () => {
                           Selected Color: <span className="text-[#292522] font-medium">{item.selectedColor}</span>
                         </p>
                       )}
-                      <p className="text-xs text-[#292522] font-medium sm:hidden">
-                        ${product.price} each
-                      </p>
                     </div>
                   </div>
 
@@ -195,13 +193,8 @@ export const CartPage: React.FC = () => {
                     </div>
 
                     {/* Line Total */}
-                    <div className="text-right min-w-[70px]">
-                      <span className="text-sm font-semibold text-[#292522] tabular-nums block">
-                        ${lineTotal.toFixed(2)}
-                      </span>
-                      <span className="text-[10px] text-[#77716C] hidden sm:block">
-                        (${product.price} ea)
-                      </span>
+                    <div className="text-right min-w-[70px] flex items-center justify-end self-center">
+                      <Money amount={lineTotal} className="text-sm font-semibold text-[#292522]" />
                     </div>
 
                     {/* Remove */}
@@ -268,20 +261,20 @@ export const CartPage: React.FC = () => {
           <div className="space-y-2.5 text-xs text-[#77716C] pt-2 border-t border-[#E9E3DE]/70">
             <div className="flex justify-between">
               <span>Items Subtotal</span>
-              <span className="font-semibold text-[#292522] tabular-nums">${cartSubtotal.toFixed(2)}</span>
+              <span className="font-semibold text-[#292522] tabular-nums"><Money amount={cartSubtotal} /></span>
             </div>
 
             {discountAmount > 0 && (
               <div className="flex justify-between text-[#89947D]">
                 <span>Promotional Savings</span>
-                <span className="font-semibold tabular-nums">-${discountAmount.toFixed(2)}</span>
+                <span className="font-semibold tabular-nums">−<Money amount={discountAmount} /></span>
               </div>
             )}
 
             <div className="flex justify-between">
               <span>Estimated Shipping</span>
               <span className="font-semibold text-[#292522] tabular-nums">
-                {shippingFee === 0 ? <span className="text-[#89947D]">FREE</span> : `$${shippingFee.toFixed(2)}`}
+                {shippingFee === 0 ? <span className="text-[#89947D]">FREE</span> : <Money amount={shippingFee} />}
               </span>
             </div>
 
@@ -292,7 +285,7 @@ export const CartPage: React.FC = () => {
 
             <div className="flex justify-between text-base font-bold text-[#292522] pt-3 border-t border-[#E9E3DE]">
               <span>Estimated Total</span>
-              <span className="tabular-nums">${cartTotal.toFixed(2)}</span>
+              <span className="tabular-nums"><Money amount={cartTotal} className="font-bold" /></span>
             </div>
           </div>
 

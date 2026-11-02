@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { MistyBlissIcon } from './MistyBlissIcon';
 import { useRouter } from '../../context/RouterContext';
+import { Money } from './Money';
 
 interface ChatProductCard {
   id: string;
@@ -300,11 +301,11 @@ export const LiveChatWidget: React.FC = () => {
                               </div>
                               <div className="flex items-center gap-1.5 mt-0.5">
                                 <span className="text-xs font-bold text-[#292522]">
-                                  ${prod.price}
+                                  <Money amount={prod.price} className="font-semibold" />
                                 </span>
                                 {prod.compareAtPrice && (
                                   <span className="text-[10px] text-[#A89F97] line-through">
-                                    ${prod.compareAtPrice}
+                                    <Money amount={prod.compareAtPrice} muted className="line-through text-[#77716C]" />
                                   </span>
                                 )}
                               </div>

@@ -6,6 +6,7 @@ import { useShop } from '../../context/ShopContext';
 import { useRouter } from '../../context/RouterContext';
 import { ProductImage } from '../common/ProductImage';
 import { Heart, Plus, Check } from 'lucide-react';
+import { Money } from '../common/Money';
 
 interface ProductCardProps {
   product: Product;
@@ -57,7 +58,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 text-[11px] font-medium tracking-tight">
           {hasDiscount && (
             <span className="bg-[#FAF8F5]/90 backdrop-blur-xs text-[#A84940] px-2 py-0.5 rounded text-[11px] font-semibold border border-[#E9E3DE]">
-              Save ${product.compareAtPrice! - product.price}
+              Save <Money amount={product.compareAtPrice! - product.price} />
             </span>
           )}
           {product.isNew && !hasDiscount && (
@@ -130,14 +131,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Price and Mobile Add Button */}
         <div className="pt-2 border-t border-[#E9E3DE]/60 flex items-center justify-between">
-          <div className="flex items-baseline gap-1.5 sm:gap-2">
-            <span className="text-xs sm:text-base font-semibold text-[#292522] tabular-nums">
-              ${product.price}
-            </span>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Money
+              amount={product.price}
+              className="text-xs sm:text-base font-semibold text-[#292522]"
+            />
             {hasDiscount && (
-              <span className="text-[11px] sm:text-xs text-[#77716C] line-through tabular-nums">
-                ${product.compareAtPrice}
-              </span>
+              <Money
+                amount={product.compareAtPrice}
+                muted
+                className="text-[11px] sm:text-xs text-[#77716C] line-through"
+              />
             )}
           </div>
 

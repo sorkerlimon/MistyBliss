@@ -577,7 +577,7 @@ export async function fetchSupabaseCategories(): Promise<Category[] | null> {
 
     if (error || !data) return null;
 
-    return data.map((item: any) => ({
+    return data.map((item: any, index: number) => ({
       id: item.id,
       slug: item.slug,
       name: item.name,
@@ -585,6 +585,7 @@ export async function fetchSupabaseCategories(): Promise<Category[] | null> {
       description: item.description || '',
       image: item.image || '',
       imageSource: (item.image_source === 'file' ? 'file' : 'url') as CategoryImageSource,
+      sortOrder: typeof item.sort_order === 'number' ? item.sort_order : index + 1,
     }));
   } catch {
     return null;
@@ -604,7 +605,7 @@ export async function upsertSupabaseCategory(category: Category, sortOrder = 0):
       description: category.description || '',
       image: category.image,
       image_source: category.imageSource || 'url',
-      sort_order: sortOrder,
+      sort_order: category.sortOrder ?? sortOrder,
       updated_at: new Date().toISOString(),
     };
 

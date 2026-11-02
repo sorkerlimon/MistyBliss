@@ -165,7 +165,7 @@ export const Footer: React.FC = () => {
               <div>
                 <h4 className="font-semibold text-white tracking-tight text-[11px] sm:text-xs">Free Express Shipping</h4>
                 <p className="text-[#A89F97] mt-0.5 text-[10px] sm:text-[11px] leading-relaxed">
-                  On orders over $75.
+                  On orders over ৳75.
                 </p>
               </div>
             </div>

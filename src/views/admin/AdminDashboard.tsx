@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import type { OrderStatus } from '../../types';
+import { formatMoney } from '../../lib/money';
+import { Money } from '../../components/common/Money';
 
 interface AdminDashboardProps {
   onNavigate: (tab: 'orders' | 'products') => void;
@@ -79,7 +81,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
     {
       label: 'All Orders',
       value: stats.totalOrders,
-      hint: `$${stats.revenue.toFixed(0)} revenue`,
+      hint: `${formatMoney(stats.revenue, { compact: true })} revenue`,
       icon: <ShoppingCart className="w-4 h-4" />,
       accent: 'text-[#C77F79] bg-[#FAF0EE]',
       onClick: () => onNavigate('orders'),
@@ -173,7 +175,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     </p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="font-bold text-[#292522] tabular-nums">${ord.total.toFixed(2)}</p>
+                    <p className="font-bold text-[#292522] tabular-nums"><Money amount={ord.total} className="font-bold text-[#292522]" /></p>
                     <p className="text-[10px] capitalize text-[#77716C]">{ord.status}</p>
                   </div>
                 </div>

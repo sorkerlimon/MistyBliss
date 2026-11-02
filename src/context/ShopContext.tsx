@@ -746,6 +746,11 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const slug = uniqueSlug(input.slug?.trim() || name, categories.map((c) => c.slug));
+    const sortOrder =
+      typeof input.sortOrder === 'number' && input.sortOrder > 0
+        ? Math.floor(input.sortOrder)
+        : categories.length + 1;
+
     const newCategory: Category = {
       id: `cat-${slug}-${Date.now().toString(36)}`,
       slug,
@@ -754,11 +759,14 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
       description: (input.description || '').trim(),
       image: input.image.trim(),
       imageSource: input.imageSource || 'url',
+      sortOrder,
     };
 
-    setCategories((prev) => [...prev, newCategory]);
+    setCategories((prev) =>
+      [...prev, newCategory].sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999))
+    );
     addToast('Category Created', `${newCategory.name} is live on the storefront`);
-    upsertSupabaseCategory(newCategory, categories.length + 1).catch((err) => {
+    upsertSupabaseCategory(newCategory, sortOrder).catch((err) => {
       console.warn('Supabase category add failed:', err);
     });
     return newCategory;
@@ -767,6 +775,10 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateCategory = (updated: Category) => {
     const others = categories.filter((c) => c.id !== updated.id).map((c) => c.slug);
     const slug = uniqueSlug(updated.slug || updated.name, others);
+    const sortOrder =
+      typeof updated.sortOrder === 'number' && updated.sortOrder > 0
+        ? Math.floor(updated.sortOrder)
+        : categories.findIndex((c) => c.id === updated.id) + 1;
     const next: Category = {
       ...updated,
       slug: slugify(slug) || updated.slug,
@@ -775,11 +787,15 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
       description: (updated.description || '').trim(),
       image: updated.image.trim(),
       imageSource: updated.imageSource || 'url',
+      sortOrder: sortOrder > 0 ? sortOrder : 1,
     };
-    setCategories((prev) => prev.map((c) => (c.id === next.id ? next : c)));
+    setCategories((prev) =>
+      prev
+        .map((c) => (c.id === next.id ? next : c))
+        .sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999))
+    );
     addToast('Category Updated', `${next.name} saved`);
-    const sortOrder = categories.findIndex((c) => c.id === next.id) + 1;
-    upsertSupabaseCategory(next, sortOrder > 0 ? sortOrder : 1).catch((err) => {
+    upsertSupabaseCategory(next, next.sortOrder ?? 1).catch((err) => {
       console.warn('Supabase category update failed:', err);
     });
   };
@@ -1059,7 +1075,7 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (match.minSpend && cartSubtotal < match.minSpend) {
         return {
           success: false,
-          message: `Code "${normalized}" requires a minimum subtotal of $${match.minSpend}.`,
+          message: `Code "${normalized}" requires a minimum subtotal of ৳${Number(match.minSpend).toFixed(2)}.`,
         };
       }
       setPromoDiscount({ code: normalized, percent: match.discountPercent });

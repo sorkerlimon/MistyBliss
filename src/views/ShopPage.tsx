@@ -367,9 +367,9 @@ export const ShopPage: React.FC<ShopPageProps> = ({
             <div className="space-y-1 text-xs text-[#77716C]">
               {[
                 { id: 'all', label: 'All Prices' },
-                { id: 'under-50', label: 'Under $50' },
-                { id: '50-100', label: '$50 to $100' },
-                { id: 'over-100', label: '$100 and above' },
+                { id: 'under-50', label: 'Under ৳50' },
+                { id: '50-100', label: '৳50 to ৳100' },
+                { id: 'over-100', label: '৳100 and above' },
               ].map((tier) => (
                 <label key={tier.id} className="flex items-center gap-2 cursor-pointer py-0.5">
                   <input

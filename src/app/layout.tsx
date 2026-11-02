@@ -117,8 +117,8 @@ export default function RootLayout({
     logo: `${SITE_URL}${LOGO_IMAGE}`,
     image: `${SITE_URL}${OG_IMAGE}`,
     description: DEFAULT_DESCRIPTION,
-    priceRange: '$$',
-    currenciesAccepted: 'BDT, USD',
+    priceRange: '৳৳',
+    currenciesAccepted: 'BDT',
     paymentAccepted: 'Cash, bKash, Nagad, Credit Card, Bank Transfer',
     telephone: SITE_PHONE,
     email: SITE_EMAIL,
@@ -213,7 +213,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Bengali:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
         <script

@@ -5,6 +5,7 @@ import { Package, Link2, Upload, Trash2, Pencil, X, Check, Plus, Star } from 'lu
 import { useShop } from '../../context/ShopContext';
 import { Product, ProductColor, StockStatus } from '../../types';
 import { slugify, uniqueSlug } from '../../lib/slug';
+import { formatMoney } from '../../lib/money';
 
 type ImageSource = 'url' | 'file';
 
@@ -364,15 +365,15 @@ export const ProductAdminPanel: React.FC = () => {
                 </div>
                 <p className="text-[11px] text-[#77716C] truncate mt-0.5">
                   {categoryName(p.categorySlug)}
-                  {' · Sell $'}
-                  {p.price.toFixed(2)}
+                  {' · Sell '}
+                  {formatMoney(p.price)}
                   {p.compareAtPrice && p.compareAtPrice > p.price ? (
                     <>
                       {' '}
-                      <span className="line-through text-[#A89F97]">${p.compareAtPrice.toFixed(2)}</span>
+                      <span className="line-through text-[#A89F97]">{formatMoney(p.compareAtPrice)}</span>
                     </>
                   ) : null}
-                  {p.purchasePrice != null ? ` · Buy $${p.purchasePrice.toFixed(2)}` : ''}
+                  {p.purchasePrice != null ? ` · Buy ${formatMoney(p.purchasePrice)}` : ''}
                   {' · '}
                   {p.images.length} img
                   {' · '}

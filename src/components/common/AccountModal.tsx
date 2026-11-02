@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useShop } from '../../context/ShopContext';
 import { useRouter } from '../../context/RouterContext';
 import { X, User, Package, MapPin /* , Heart, LogOut, Check */ } from 'lucide-react';
+import { Money } from './Money';
 
 export const AccountModal: React.FC = () => {
   const { isAccountModalOpen, closeAccountModal /* , wishlistCount */ } = useShop();
@@ -123,7 +124,7 @@ export const AccountModal: React.FC = () => {
                   <p className="text-[#77716C] text-[11px]">{ord.items}</p>
                   <div className="flex justify-between items-center pt-1 border-t border-[#E9E3DE]/60 text-[11px]">
                     <span className="text-[#77716C]">{ord.date}</span>
-                    <span className="font-semibold text-[#292522]">${ord.total.toFixed(2)}</span>
+                    <span className="font-semibold text-[#292522]"><Money amount={ord.total} className="font-semibold text-[#292522]" /></span>
                   </div>
                 </div>
               ))}

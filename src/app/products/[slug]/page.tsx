@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
     title: `${product.name} | Misty Bliss`,
     description: product.description,
     openGraph: {
-      title: `${product.name} - $${product.price} | Misty Bliss`,
+      title: `${product.name} - ৳${product.price} | Misty Bliss`,
       description: product.description,
       images: [
         {

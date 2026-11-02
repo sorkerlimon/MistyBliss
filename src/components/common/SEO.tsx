@@ -77,7 +77,7 @@ export const SEO: React.FC = () => {
                 offers: {
                   '@type': 'Offer',
                   price: prod.price,
-                  priceCurrency: 'USD',
+                  priceCurrency: 'BDT',
                   availability: prod.stockStatus === 'in_stock' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
                 },
               },
@@ -153,7 +153,7 @@ export const SEO: React.FC = () => {
         const prod = products.find((p) => p.slug === route.slug);
         if (prod) {
           title = `${prod.name} – Handcrafted Décor | Misty Bliss`;
-          description = `${prod.name}: ${prod.description.slice(0, 140)}... Handcrafted in ${prod.material}. Free delivery over $75.`;
+          description = `${prod.name}: ${prod.description.slice(0, 140)}... Handcrafted in ${prod.material}. Free delivery over ৳75.`;
           jsonLd = {
             '@context': 'https://schema.org',
             '@type': 'Product',
@@ -169,7 +169,7 @@ export const SEO: React.FC = () => {
             offers: {
               '@type': 'Offer',
               price: prod.price,
-              priceCurrency: 'USD',
+              priceCurrency: 'BDT',
               priceValidUntil: '2026-12-31',
               itemCondition: 'https://schema.org/NewCondition',
               availability: prod.stockStatus === 'in_stock' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',

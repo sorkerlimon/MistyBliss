@@ -6,6 +6,7 @@ import { useShop } from '../../context/ShopContext';
 import { useRouter } from '../../context/RouterContext';
 import { ProductImage } from '../common/ProductImage';
 import { X, Plus, Minus, Trash2, ArrowRight, ShoppingBag, Tag, CheckCircle2 } from 'lucide-react';
+import { Money } from '../common/Money';
 
 export const CartDrawer: React.FC = () => {
   const {
@@ -88,7 +89,7 @@ export const CartDrawer: React.FC = () => {
           <div className="bg-[#FAF8F5] px-5 py-3 border-b border-[#E9E3DE] text-xs">
             {amountNeededForFreeShipping > 0 ? (
               <p className="text-[#292522] mb-1.5 font-medium">
-                Add <span className="font-semibold text-[#C77F79]">${amountNeededForFreeShipping.toFixed(2)}</span> more to unlock <span className="font-semibold">Free Shipping</span>
+                Add <span className="font-semibold text-[#C77F79]"><Money amount={amountNeededForFreeShipping} className="font-semibold text-[#C77F79]" /></span> more to unlock <span className="font-semibold">Free Shipping</span>
               </p>
             ) : (
               <p className="text-[#89947D] mb-1.5 font-semibold flex items-center gap-1.5">
@@ -198,7 +199,7 @@ export const CartDrawer: React.FC = () => {
                         </div>
 
                         <span className="text-xs font-semibold text-[#292522] tabular-nums">
-                          ${lineTotal.toFixed(2)}
+                          <Money amount={lineTotal} className="font-semibold" />
                         </span>
                       </div>
                     </div>
@@ -253,26 +254,26 @@ export const CartDrawer: React.FC = () => {
               <div className="space-y-1.5 text-xs text-[#77716C] pt-2 border-t border-[#E9E3DE]/60">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span className="font-medium text-[#292522] tabular-nums">${cartSubtotal.toFixed(2)}</span>
+                  <span className="font-medium text-[#292522] tabular-nums"><Money amount={cartSubtotal} /></span>
                 </div>
 
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-[#89947D]">
                     <span>Discount</span>
-                    <span className="font-medium tabular-nums">-${discountAmount.toFixed(2)}</span>
+                    <span className="font-medium tabular-nums">−<Money amount={discountAmount} /></span>
                   </div>
                 )}
 
                 <div className="flex justify-between">
                   <span>Standard Shipping</span>
                   <span className="font-medium text-[#292522] tabular-nums">
-                    {shippingFee === 0 ? <span className="text-[#89947D]">FREE</span> : `$${shippingFee.toFixed(2)}`}
+                    {shippingFee === 0 ? <span className="text-[#89947D]">FREE</span> : <Money amount={shippingFee} />}
                   </span>
                 </div>
 
                 <div className="flex justify-between text-sm font-semibold text-[#292522] pt-2 border-t border-[#E9E3DE]">
                   <span>Estimated Total</span>
-                  <span className="tabular-nums">${cartTotal.toFixed(2)}</span>
+                  <span className="tabular-nums"><Money amount={cartTotal} className="font-bold" /></span>
                 </div>
               </div>
 

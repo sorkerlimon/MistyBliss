@@ -44,6 +44,8 @@ export interface Category {
   description: string;
   image: string;
   imageSource: CategoryImageSource;
+  /** Display order on the storefront (1 = first). */
+  sortOrder?: number;
 }
 
 export interface RoomCollection {

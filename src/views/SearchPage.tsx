@@ -268,10 +268,10 @@ export const SearchPage: React.FC = () => {
               <div className="grid grid-cols-2 gap-1.5">
                 {[
                   { id: 'all', label: 'All Prices' },
-                  { id: 'under-40', label: 'Under $40' },
-                  { id: '40-75', label: '$40 – $75' },
-                  { id: '75-120', label: '$75 – $120' },
-                  { id: 'over-120', label: '$120+' },
+                  { id: 'under-40', label: 'Under ৳40' },
+                  { id: '40-75', label: '৳40 – ৳75' },
+                  { id: '75-120', label: '৳75 – ৳120' },
+                  { id: 'over-120', label: '৳120+' },
                 ].map((tier) => (
                   <button
                     key={tier.id}

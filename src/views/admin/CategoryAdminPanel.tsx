@@ -13,6 +13,7 @@ const emptyForm = {
   description: '',
   image: '',
   imageSource: 'url' as CategoryImageSource,
+  sortOrder: 1,
 };
 
 const MAX_FILE_BYTES = 900_000;
@@ -56,7 +57,7 @@ export const CategoryAdminPanel: React.FC = () => {
 
   const openCreate = () => {
     setEditingId(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, sortOrder: categories.length + 1 });
     setSlugTouched(false);
     setFileName('');
     setFormOpen(true);
@@ -71,6 +72,7 @@ export const CategoryAdminPanel: React.FC = () => {
       description: cat.description,
       image: cat.image,
       imageSource: cat.imageSource || 'url',
+      sortOrder: cat.sortOrder ?? categories.findIndex((c) => c.id === cat.id) + 1,
     });
     setSlugTouched(true);
     setFileName(cat.imageSource === 'file' ? 'Uploaded image' : '');
@@ -121,6 +123,7 @@ export const CategoryAdminPanel: React.FC = () => {
       image: form.image.trim(),
       imageSource: form.imageSource,
       slug: slugify(form.slug || form.name),
+      sortOrder: Math.max(1, Math.floor(Number(form.sortOrder) || 1)),
     };
 
     if (editing) {
@@ -186,6 +189,12 @@ export const CategoryAdminPanel: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              <span
+                className="text-[10px] font-semibold tabular-nums px-2 py-0.5 rounded bg-[#EFECE6] border border-[#E9E3DE] text-[#292522]"
+                title="Sort order"
+              >
+                #{cat.sortOrder ?? '—'}
+              </span>
               <span className="text-[10px] font-semibold tabular-nums px-2 py-0.5 rounded bg-[#FAF8F5] border border-[#E9E3DE] text-[#77716C]">
                 {count} {count === 1 ? 'product' : 'products'}
               </span>
@@ -267,6 +276,29 @@ export const CategoryAdminPanel: React.FC = () => {
                   className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E9E3DE] rounded-md font-mono focus:outline-none focus:ring-1 focus:ring-[#C77F79]"
                 />
                 <p className="text-[10px] text-[#A89F97] mt-1">URL: /categories/{form.slug || '…'}</p>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-[#77716C] mb-1">
+                  Sort order *
+                </label>
+                <input
+                  required
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={form.sortOrder}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      sortOrder: Math.max(1, Math.floor(Number(e.target.value) || 1)),
+                    }))
+                  }
+                  className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E9E3DE] rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79]"
+                />
+                <p className="text-[10px] text-[#A89F97] mt-1">
+                  Lower numbers appear first on the storefront (1 = top).
+                </p>
               </div>
 
               <div>

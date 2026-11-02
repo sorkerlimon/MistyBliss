@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Tag, Trash2, Plus, X, Check, Power } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { PromoCode } from '../../types';
+import { formatMoney } from '../../lib/money';
 
 const emptyForm = {
   code: '',
@@ -81,7 +82,7 @@ export const PromoAdminPanel: React.FC = () => {
               <span className="font-mono font-bold text-[#292522]">{pr.code}</span>
               <p className="text-[11px] text-[#77716C]">
                 {pr.discountPercent}% off
-                {pr.minSpend ? ` · min $${pr.minSpend}` : ''}
+                {pr.minSpend ? ` · min ${formatMoney(pr.minSpend)}` : ''}
                 {pr.expiryDate ? ` · expires ${pr.expiryDate}` : ''}
                 {' · '}
                 used {pr.usageCount}

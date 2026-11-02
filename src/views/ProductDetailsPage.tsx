@@ -7,6 +7,7 @@ import { useShop } from '../context/ShopContext';
 import { ProductImage } from '../components/common/ProductImage';
 import { ProductCard } from '../components/product/ProductCard';
 import { Heart, ShoppingBag, Truck, RotateCcw, ShieldCheck, Check, Star, Share2 } from 'lucide-react';
+import { Money } from '../components/common/Money';
 
 interface ProductDetailsPageProps {
   slug: string;
@@ -118,13 +119,13 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({ slug }) 
 
             {/* Price & Rating */}
             <div className="flex items-center gap-3 pt-1">
-              <span className="text-xl font-bold text-[#292522] tabular-nums">
-                ${product.price.toFixed(2)}
-              </span>
+              <Money amount={product.price} className="text-xl font-bold text-[#292522]" />
               {product.compareAtPrice && product.compareAtPrice > product.price && (
-                <span className="text-sm text-[#77716C] line-through tabular-nums">
-                  ${product.compareAtPrice.toFixed(2)}
-                </span>
+                <Money
+                  amount={product.compareAtPrice}
+                  muted
+                  className="text-sm text-[#77716C] line-through"
+                />
               )}
               <div className="flex items-center gap-1 text-xs text-[#77716C] ml-auto">
                 <Star className="w-3.5 h-3.5 fill-[#C77F79] text-[#C77F79]" />
@@ -193,7 +194,11 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({ slug }) 
                 className="flex-1 py-3 px-5 bg-[#292522] hover:bg-[#3D3834] active:bg-[#1a1715] text-white text-xs font-semibold rounded-md flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer touch-manipulation"
               >
                 <ShoppingBag className="w-4 h-4" />
-                <span>Add to Bag · ${(product.price * quantity).toFixed(2)}</span>
+                <span className="inline-flex items-center gap-1.5">
+                  Add to Bag
+                  <span className="opacity-60">·</span>
+                  <Money amount={product.price * quantity} className="font-semibold text-white" />
+                </span>
               </button>
 
               {/* Wishlist */}
@@ -224,7 +229,9 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({ slug }) 
           <div className="bg-white p-4 rounded-xl border border-[#E9E3DE] space-y-2.5 text-xs text-[#77716C]">
             <div className="flex items-center gap-2.5">
               <Truck className="w-4 h-4 text-[#C77F79]" />
-              <span>Complimentary shipping on orders over $75</span>
+              <span className="inline-flex items-center gap-1 flex-wrap">
+              Complimentary shipping on orders over <Money amount={75} className="font-semibold" />
+            </span>
             </div>
             <div className="flex items-center gap-2.5">
               <RotateCcw className="w-4 h-4 text-[#C77F79]" />

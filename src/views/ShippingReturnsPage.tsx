@@ -24,7 +24,7 @@ export const ShippingReturnsPage: React.FC = () => {
           <Truck className="w-5 h-5 text-[#C77F79]" />
           <h3 className="font-semibold text-sm text-[#292522]">Complimentary Shipping</h3>
           <p className="text-xs text-[#77716C] leading-relaxed">
-            Free carbon-neutral delivery on all orders over $75 across the domestic United States and select international studios.
+            Free carbon-neutral delivery on all orders over ৳75 across Bangladesh.
           </p>
         </div>
 

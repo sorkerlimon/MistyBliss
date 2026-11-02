@@ -23,6 +23,7 @@ import { PromoAdminPanel } from './PromoAdminPanel';
 import { BlogAdminPanel } from './BlogAdminPanel';
 import { NewsletterAdminPanel } from './NewsletterAdminPanel';
 import { AdminDashboard } from './AdminDashboard';
+import { Money } from '../../components/common/Money';
 
 type AdminTab =
   | 'dashboard'
@@ -300,7 +301,7 @@ export const AdminPortal: React.FC = () => {
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <span className="font-bold text-[#292522] tabular-nums">${ord.total.toFixed(2)}</span>
+                        <span className="font-bold text-[#292522] tabular-nums"><Money amount={ord.total} className="font-bold text-[#292522]" /></span>
                         <select
                           value={ord.status}
                           onChange={(e) => updateOrderStatus(ord.id, e.target.value as any)}
