@@ -15,6 +15,8 @@ import {
 import { MistyBlissIcon } from './MistyBlissIcon';
 import { useRouter } from '../../context/RouterContext';
 import { Money } from './Money';
+import { SITE_PHONE, SITE_WHATSAPP } from '../../lib/site';
+import { Turnstile, useTurnstileToken, verifyTurnstile } from './Turnstile';
 
 interface ChatProductCard {
   id: string;
@@ -71,16 +73,24 @@ export const LiveChatWidget: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState(1);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [chatError, setChatError] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
+  const {
+    setToken: setTurnstileToken,
+    widgetKey,
+    reset: resetTurnstile,
+    obtainToken,
+    controllerRef: turnstileControllerRef,
+  } = useTurnstileToken();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // WhatsApp configuration
-  const whatsappNumber = '8801571376061';
-  const whatsappDisplay = '+8801571376061';
+  const whatsappNumber = SITE_WHATSAPP;
+  const whatsappDisplay = SITE_PHONE;
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    'Hi Misty Bliss, I would like to inquire about home décor items.'
+    'Hi Misty Bliss, I would like to inquire about home decor items.'
   )}`;
 
   // Dismiss tooltip after 9 seconds if not opened
@@ -119,9 +129,25 @@ export const LiveChatWidget: React.FC = () => {
     setIsOpen(false);
   };
 
-  const handleSendMessage = (textToSend?: string) => {
+  const handleSendMessage = async (textToSend?: string) => {
     const messageContent = (textToSend || inputMessage).trim();
     if (!messageContent) return;
+
+    setChatError('');
+    let token: string | null = null;
+    try {
+      token = (await obtainToken()) || null;
+    } catch (err) {
+      setChatError(err instanceof Error ? err.message : 'Please complete the security check.');
+      resetTurnstile();
+      return;
+    }
+    const turnstileError = await verifyTurnstile(token);
+    if (turnstileError) {
+      setChatError(turnstileError);
+      resetTurnstile();
+      return;
+    }
 
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -133,6 +159,7 @@ export const LiveChatWidget: React.FC = () => {
     setMessages((prev) => [...prev, userMsg]);
     setInputMessage('');
     setIsTyping(true);
+    resetTurnstile();
 
     // Every visitor message directs them to WhatsApp
     setTimeout(() => {
@@ -159,7 +186,7 @@ export const LiveChatWidget: React.FC = () => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      handleSendMessage();
+      void handleSendMessage();
     }
   };
 
@@ -389,7 +416,7 @@ export const LiveChatWidget: React.FC = () => {
               <button
                 key={idx}
                 type="button"
-                onClick={() => handleSendMessage(prompt.query)}
+                onClick={() => void handleSendMessage(prompt.query)}
                 className="shrink-0 text-[11px] bg-white text-[#4A443F] hover:text-[#C77F79] hover:border-[#C77F79] px-2.5 py-1 rounded-full border border-[#DFD7CF] transition-colors shadow-2xs whitespace-nowrap cursor-pointer"
               >
                 {prompt.label}
@@ -402,27 +429,39 @@ export const LiveChatWidget: React.FC = () => {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleSendMessage();
+                void handleSendMessage();
               }}
-              className="flex items-center gap-2"
+              className="space-y-1.5"
             >
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Type a message to get our WhatsApp..."
-                className="flex-1 bg-[#FAF8F5] border border-[#E4DDD5] rounded-full px-3.5 py-2 text-xs text-[#292522] placeholder:text-[#A89F97] focus:outline-hidden focus:ring-1 focus:ring-[#C77F79] focus:border-[#C77F79] transition-all"
+              <div className="flex items-center gap-2">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type a message to get our WhatsApp..."
+                  className="flex-1 bg-[#FAF8F5] border border-[#E4DDD5] rounded-full px-3.5 py-2 text-xs text-[#292522] placeholder:text-[#A89F97] focus:outline-hidden focus:ring-1 focus:ring-[#C77F79] focus:border-[#C77F79] transition-all"
+                />
+                <button
+                  type="submit"
+                  disabled={!inputMessage.trim()}
+                  aria-label="Send message"
+                  className="w-8 h-8 rounded-full bg-[#C77F79] hover:bg-[#B56F69] disabled:opacity-40 disabled:hover:bg-[#C77F79] text-white flex items-center justify-center transition-colors shadow-xs shrink-0 cursor-pointer"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <Turnstile
+                key={widgetKey}
+                onTokenChange={setTurnstileToken}
+                controllerRef={turnstileControllerRef}
               />
-              <button
-                type="submit"
-                disabled={!inputMessage.trim()}
-                aria-label="Send message"
-                className="w-8 h-8 rounded-full bg-[#C77F79] hover:bg-[#B56F69] disabled:opacity-40 disabled:hover:bg-[#C77F79] text-white flex items-center justify-center transition-colors shadow-xs shrink-0 cursor-pointer"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
+              {chatError && (
+                <p className="text-[10px] text-[#A84940] px-1" role="alert">
+                  {chatError}
+                </p>
+              )}
             </form>
             <div className="flex items-center justify-between mt-2 px-1 text-[10px] text-[#A89F97]">
               <span>Misty Bliss Concierge Studio</span>

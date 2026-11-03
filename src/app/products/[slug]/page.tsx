@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
   if (!product) {
     return {
       title: 'Product Details | Misty Bliss',
-      description: 'Artisanal home décor and curated lifestyle objects.',
+      description: 'Artisanal home decor and curated lifestyle objects.',
     };
   }
 

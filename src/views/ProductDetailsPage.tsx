@@ -252,7 +252,7 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({ slug }) 
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold text-[#292522]">Complementary Pieces</h2>
             <Link href="/shop" className="text-xs text-[#C77F79] font-medium hover:underline">
-              View All Décor →
+              View All Decor →
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

@@ -1,6 +1,6 @@
 {
-  "name": "Misty Bliss - Home Décor & Lifestyle",
-  "description": "Discover thoughtfully curated home décor, ceramics, botanical arrangements, lighting, and artisanal accessories.",
+  "name": "Misty Bliss - Home Decor & Lifestyle",
+  "description": "Discover thoughtfully curated home decor, ceramics, botanical arrangements, lighting, and artisanal accessories.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

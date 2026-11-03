@@ -3,6 +3,7 @@ import {
   areAdminCredentialsConfigured,
   validateAdminCredentials,
 } from '../../../../lib/adminConfig';
+import { verifyTurnstileToken } from '../../../../lib/turnstile';
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,7 +18,19 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { email, password } = body || {};
+    const { email, password, turnstileToken } = body || {};
+
+    const verification = await verifyTurnstileToken(req, turnstileToken);
+    if (!verification.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'turnstile_failed',
+          message: verification.reason,
+        },
+        { status: 403 }
+      );
+    }
 
     if (!email || !password) {
       return NextResponse.json(

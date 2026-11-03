@@ -12,6 +12,11 @@ import {
   NewsletterSubscriber,
 } from '../types';
 
+/** Normalize display copy — e.g. Décor → Decor */
+function stripLatinAccents(value: string): string {
+  return value.normalize('NFD').replace(/\p{M}/gu, '');
+}
+
 // Read Supabase credentials with priority cascade:
 // 1. import.meta.env.NEXT_PUBLIC_SUPABASE_URL / VITE_SUPABASE_URL
 // 2. process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -63,32 +68,13 @@ export interface ConnectionTestResult {
 }
 
 /**
- * Test connectivity with Supabase project and check available tables
+ * Test connectivity with Supabase project and check available tables.
+ * Avoid hitting `/rest/v1/` bare — publishable keys often get a noisy 401 there.
  */
 export async function testSupabaseConnection(): Promise<ConnectionTestResult> {
   const startTime = Date.now();
   try {
-    // 1. Check basic endpoint accessibility
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
-      method: 'GET',
-      headers: {
-        apikey: SUPABASE_PUBLISHABLE_KEY,
-        Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-      },
-    });
-
-    const latencyMs = Date.now() - startTime;
-
-    if (!response.ok && response.status !== 200 && response.status !== 404) {
-      return {
-        connected: false,
-        latencyMs,
-        message: `Supabase returned HTTP ${response.status}`,
-        error: `Failed to authenticate with Supabase API. Check your publishable key.`,
-      };
-    }
-
-    // 2. Probe tables to check if database schema has been deployed
+    // Probe a real table instead of the REST root (which 401s with sb_publishable_ keys)
     const [productsProbe, ordersProbe, promosProbe, subscribersProbe, categoriesProbe, roomsProbe, blogProbe] =
       await Promise.allSettled([
         supabase.from('products').select('id').limit(1),
@@ -99,6 +85,8 @@ export async function testSupabaseConnection(): Promise<ConnectionTestResult> {
         supabase.from('rooms').select('id').limit(1),
         supabase.from('blog_posts').select('id').limit(1),
       ]);
+
+    const latencyMs = Date.now() - startTime;
 
     const tablesStatus = {
       products: productsProbe.status === 'fulfilled' && !productsProbe.value.error,
@@ -111,6 +99,21 @@ export async function testSupabaseConnection(): Promise<ConnectionTestResult> {
     };
 
     const hasAnyTable = Object.values(tablesStatus).some(Boolean);
+    if (!hasAnyTable) {
+      const firstError =
+        productsProbe.status === 'fulfilled'
+          ? productsProbe.value.error?.message
+          : productsProbe.status === 'rejected'
+            ? String(productsProbe.reason)
+            : 'No reachable tables';
+      return {
+        connected: false,
+        latencyMs,
+        message: 'Could not reach Supabase tables',
+        error: firstError,
+        tablesStatus,
+      };
+    }
 
     return {
       connected: true,
@@ -580,9 +583,9 @@ export async function fetchSupabaseCategories(): Promise<Category[] | null> {
     return data.map((item: any, index: number) => ({
       id: item.id,
       slug: item.slug,
-      name: item.name,
-      shortName: item.short_name || item.name,
-      description: item.description || '',
+      name: stripLatinAccents(String(item.name || '')),
+      shortName: stripLatinAccents(String(item.short_name || item.name || '')),
+      description: stripLatinAccents(String(item.description || '')),
       image: item.image || '',
       imageSource: (item.image_source === 'file' ? 'file' : 'url') as CategoryImageSource,
       sortOrder: typeof item.sort_order === 'number' ? item.sort_order : index + 1,

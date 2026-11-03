@@ -11,7 +11,7 @@ export default function NotFound() {
       <span className="text-xs uppercase tracking-widest text-[#C77F79] font-bold">404 Error</span>
       <h1 className="text-3xl sm:text-4xl font-bold text-[#292522]">Page Not Found</h1>
       <p className="text-xs text-[#77716C] max-w-sm mx-auto">
-        We couldn&apos;t locate the décor page or product you were looking for.
+        We couldn&apos;t locate the decor page or product you were looking for.
       </p>
       <div className="pt-4">
         <button

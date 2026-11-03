@@ -9,7 +9,7 @@ export const SEO: React.FC = () => {
   const { products, categories } = useShop();
 
   useEffect(() => {
-    let title = 'Buy Home Decor Online in Bangladesh | Luxury Interior Décor – Misty Bliss';
+    let title = 'Buy Home Decor Online in Bangladesh | Luxury Interior Decor – Misty Bliss';
     let description =
       'Shop luxury home decor online in Bangladesh at Misty Bliss. Buy ceramics, vases, lighting, wall decor, cushions, candles & stylish home decoration items with WhatsApp support.';
     let jsonLd: object | null = null;
@@ -19,7 +19,7 @@ export const SEO: React.FC = () => {
 
     switch (route.type) {
       case 'home':
-        title = 'Buy Home Decor Online in Bangladesh | Luxury Interior Décor – Misty Bliss';
+        title = 'Buy Home Decor Online in Bangladesh | Luxury Interior Decor – Misty Bliss';
         description =
           'Shop luxury home decor online in Bangladesh at Misty Bliss. Buy ceramics, vases, lighting, wall decor, cushions, candles & stylish home decoration items with WhatsApp support.';
         jsonLd = {
@@ -38,8 +38,8 @@ export const SEO: React.FC = () => {
       case 'search': {
         const query = route.searchParams.q || '';
         title = query
-          ? `Search results for "${query}" | Misty Bliss Décor`
-          : 'Search Artisanal Home Décor & Ceramics | Misty Bliss';
+          ? `Search results for "${query}" | Misty Bliss Decor`
+          : 'Search Artisanal Home Decor & Ceramics | Misty Bliss';
         description = query
           ? `Explore handcrafted stoneware, botanical arrangements, and lighting matching "${query}" at Misty Bliss.`
           : 'Search our curated catalog of hand-thrown pottery, ambient lamps, Belgian linens, and home accents.';
@@ -93,13 +93,13 @@ export const SEO: React.FC = () => {
         const isBestseller = route.searchParams.bestseller === 'true';
 
         if (isSale) {
-          title = 'Special Offers & Archive Sale | Misty Bliss Décor';
+          title = 'Special Offers & Archive Sale | Misty Bliss Decor';
           description = 'Browse limited-time offers on handcrafted ceramic vessels, brass accents, and tactile linen home accessories.';
         } else if (isNew) {
-          title = 'New Spring Arrivals | Handcrafted Décor & Ceramics | Misty Bliss';
+          title = 'New Spring Arrivals | Handcrafted Decor & Ceramics | Misty Bliss';
           description = 'Explore our newest collection of sculptural stoneware, fluted lighting, and sustainable interior accents.';
         } else if (isBestseller) {
-          title = 'Customer Bestsellers | Most-Loved Home Décor | Misty Bliss';
+          title = 'Customer Bestsellers | Most-Loved Home Decor | Misty Bliss';
           description = 'Discover the most cherished ceramics, candles, and decorative trays selected by modern interior enthusiasts.';
         } else {
           title = 'Shop Home Decor Online in Bangladesh | Misty Bliss';
@@ -129,7 +129,7 @@ export const SEO: React.FC = () => {
       case 'category': {
         const cat = categories.find((c) => c.slug === route.slug);
         const catName = cat ? cat.name : 'Category Collection';
-        title = `${catName} – Artisanal Home Décor | Misty Bliss`;
+        title = `${catName} – Artisanal Home Decor | Misty Bliss`;
         description = `Browse our handcrafted collection of ${catName.toLowerCase()}, meticulously curated with natural materials and timeless forms.`;
         jsonLd = {
           '@context': 'https://schema.org',
@@ -152,7 +152,7 @@ export const SEO: React.FC = () => {
       case 'product': {
         const prod = products.find((p) => p.slug === route.slug);
         if (prod) {
-          title = `${prod.name} – Handcrafted Décor | Misty Bliss`;
+          title = `${prod.name} – Handcrafted Decor | Misty Bliss`;
           description = `${prod.name}: ${prod.description.slice(0, 140)}... Handcrafted in ${prod.material}. Free delivery over ৳75.`;
           jsonLd = {
             '@context': 'https://schema.org',
@@ -193,7 +193,7 @@ export const SEO: React.FC = () => {
 
       case 'cart':
         title = 'Your Shopping Bag | Misty Bliss';
-        description = 'Review your curated home décor selections, calculate shipping, and proceed to secure checkout.';
+        description = 'Review your curated home decor selections, calculate shipping, and proceed to secure checkout.';
         break;
 
       case 'checkout':
@@ -202,7 +202,7 @@ export const SEO: React.FC = () => {
         break;
 
       case 'wishlist':
-        title = 'Your Saved Décor Wishlist | Misty Bliss';
+        title = 'Your Saved Decor Wishlist | Misty Bliss';
         description = 'Keep track of your favorite ceramics, lighting, and textiles to style your home.';
         break;
 

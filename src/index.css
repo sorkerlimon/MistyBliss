@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-plus-jakarta), 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-body: var(--font-inter), Inter, system-ui, -apple-system, sans-serif;
+  --font-bengali: var(--font-noto-bengali), 'Noto Sans Bengali', system-ui, sans-serif;
   
   /* Brand Tokens */
   --color-bg-canvas: #FAF8F5;

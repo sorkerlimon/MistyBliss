@@ -78,7 +78,7 @@ export interface CheckoutFormData {
   postalCode: string;
   phone: string;
   shippingMethod: 'standard' | 'express';
-  paymentMethod: 'card' | 'cod';
+  paymentMethod: 'card' | 'cod' | 'bkash';
   cardNumber?: string;
   cardExpiry?: string;
   cardCvc?: string;
@@ -137,7 +137,7 @@ export interface Order {
   shippingFee: number;
   total: number;
   status: OrderStatus;
-  paymentMethod: 'card' | 'cod';
+  paymentMethod: 'card' | 'cod' | 'bkash';
   shippingSpeed: 'standard' | 'express';
   notes?: string;
 }

@@ -207,7 +207,7 @@ export const Header: React.FC = () => {
               <form onSubmit={handleSearchSubmit} className="relative flex items-center">
                 <input
                   type="search"
-                  placeholder="Search décor..."
+                  placeholder="Search decor..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-36 md:w-56 pl-8 pr-3 py-1.5 text-xs bg-white border border-[#E9E3DE] hover:border-[#C77F79]/60 rounded-full focus:outline-none focus:ring-1 focus:ring-[#C77F79] focus:border-[#C77F79] transition-colors text-[#292522]"
@@ -278,7 +278,7 @@ export const Header: React.FC = () => {
                 route.pathname === '/shop' && !route.slug ? 'text-[#C77F79] font-semibold' : ''
               }`}
             >
-              All Décor
+              All Decor
             </Link>
             {categories.slice(0, 10).map((cat) => (
               <Link

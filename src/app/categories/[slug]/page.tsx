@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const formatted = slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' ');
   return {
     title: `${formatted} Collection | Misty Bliss`,
-    description: `Explore handcrafted ${formatted} décor, statement ceramics, and intentional accessories at Misty Bliss.`,
+    description: `Explore handcrafted ${formatted} decor, statement ceramics, and intentional accessories at Misty Bliss.`,
   };
 }
 

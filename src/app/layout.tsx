@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Inter, Noto_Sans_Bengali, Plus_Jakarta_Sans } from 'next/font/google';
 import React from 'react';
 import '../index.css';
 import { AppProviders } from '../components/providers/AppProviders';
@@ -9,10 +10,31 @@ import {
   OG_IMAGE,
   PRIMARY_KEYWORDS,
   SITE_EMAIL,
+  SITE_ADDRESS,
   SITE_NAME,
   SITE_PHONE,
   SITE_URL,
 } from '../lib/site';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-plus-jakarta',
+  display: 'swap',
+});
+
+const notoBengali = Noto_Sans_Bengali({
+  subsets: ['bengali'],
+  weight: ['500', '600', '700'],
+  variable: '--font-noto-bengali',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -104,7 +126,7 @@ export default function RootLayout({
     image: `${SITE_URL}${OG_IMAGE}`,
     email: SITE_EMAIL,
     telephone: SITE_PHONE,
-    sameAs: [`https://wa.me/${SITE_PHONE.replace('+', '')}`],
+    sameAs: [`https://wa.me/${SITE_PHONE.replace(/\D/g, '')}`],
   };
 
   const storeSchema = {
@@ -128,6 +150,8 @@ export default function RootLayout({
     },
     address: {
       '@type': 'PostalAddress',
+      streetAddress: SITE_ADDRESS,
+      addressLocality: 'Dhaka',
       addressCountry: 'BD',
     },
     contactPoint: {
@@ -204,18 +228,11 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="en-BD" className="scroll-smooth">
+    <html
+      lang="en-BD"
+      className={`scroll-smooth ${inter.variable} ${plusJakarta.variable} ${notoBengali.variable}`}
+    >
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Bengali:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}

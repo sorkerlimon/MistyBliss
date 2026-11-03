@@ -43,7 +43,7 @@ export const WishlistPage: React.FC = () => {
           </div>
           <h2 className="text-xl font-bold text-[#292522]">Your wishlist is empty</h2>
           <p className="text-xs text-[#77716C]">
-            Explore our artisanal pieces and tap the heart icon to save your favorite décor items.
+            Explore our artisanal pieces and tap the heart icon to save your favorite decor items.
           </p>
           <div className="pt-2">
             <Link

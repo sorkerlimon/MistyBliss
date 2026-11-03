@@ -10,7 +10,7 @@ interface ProductImageProps {
   priority?: boolean;
 }
 
-// Curated high-res reliable fallback images for home décor
+// Curated high-res reliable fallback images for home decor
 const DEFAULT_FALLBACK_IMAGES = [
   'https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?auto=format&fit=crop&w=800&q=80',
   'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=800&q=80',

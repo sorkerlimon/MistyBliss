@@ -71,7 +71,7 @@ export const ShippingReturnsPage: React.FC = () => {
           href="/shop"
           className="inline-block px-6 py-2.5 bg-[#292522] hover:bg-[#3D3834] text-white text-xs font-semibold rounded-md transition-colors"
         >
-          Return to Décor Catalog
+          Return to Decor Catalog
         </Link>
       </div>
     </div>

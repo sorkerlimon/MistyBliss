@@ -66,7 +66,7 @@ const AppContent: React.FC = () => {
           <div className="max-w-xl mx-auto px-4 py-20 text-center space-y-4">
             <h1 className="text-3xl font-bold text-[#292522]">Page Not Found</h1>
             <p className="text-xs text-[#77716C]">
-              We couldn't locate the décor page you were looking for.
+              We couldn't locate the decor page you were looking for.
             </p>
             <button
               onClick={() => navigate('/')}

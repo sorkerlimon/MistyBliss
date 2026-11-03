@@ -16,7 +16,11 @@ import {
   Truck,
   RotateCcw,
   Sparkles,
+  Phone,
 } from 'lucide-react';
+import { SITE_ADDRESS, SITE_PHONE } from '../../lib/site';
+import { recordNewsletterSubscriber } from '../../lib/supabase';
+import { Turnstile, useTurnstileToken } from '../common/Turnstile';
 const NEWSLETTER_RATE_KEY = 'misty_bliss_newsletter_last_submit';
 
 export const Footer: React.FC = () => {
@@ -28,6 +32,15 @@ export const Footer: React.FC = () => {
   const [honeypot, setHoneypot] = useState('');
   const [formStartedAt, setFormStartedAt] = useState(0);
   const [currency, setCurrency] = useState('BDT');
+  const {
+    token: turnstileToken,
+    setToken: setTurnstileToken,
+    widgetKey,
+    reset: resetTurnstile,
+    obtainToken,
+    controllerRef: turnstileControllerRef,
+  } = useTurnstileToken();
+  const turnstileConfigured = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
   // Avoid hydration mismatch when password managers inject DOM into the email field
   const [newsletterReady, setNewsletterReady] = useState(false);
   useEffect(() => {
@@ -35,12 +48,14 @@ export const Footer: React.FC = () => {
     setFormStartedAt(Date.now());
   }, []);
 
+  const isValidNewsletterEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(footerEmail.trim());
+
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubscribeError('');
 
     const email = footerEmail.trim().toLowerCase();
-    if (!email || !email.includes('@')) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setSubscribeError('Please enter a valid email address.');
       return;
     }
@@ -61,6 +76,26 @@ export const Footer: React.FC = () => {
     }
 
     setIsSubmitting(true);
+    let token: string | null = turnstileToken;
+    try {
+      if (!token) token = (await obtainToken()) || null;
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Please complete the security check and try again.';
+      setSubscribeError(msg);
+      resetTurnstile();
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (turnstileConfigured && !token) {
+      setSubscribeError('Please wait for the security check to finish, then submit again.');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/newsletter', {
         method: 'POST',
@@ -70,6 +105,7 @@ export const Footer: React.FC = () => {
           source: 'footer-subscription',
           company: honeypot,
           formStartedAt,
+          turnstileToken: token,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -80,6 +116,7 @@ export const Footer: React.FC = () => {
           'Please wait a minute before subscribing again. Only one request per minute is allowed.';
         setSubscribeError(msg);
         addToast('Too many attempts', msg, 'info');
+        resetTurnstile();
         return;
       }
 
@@ -87,7 +124,20 @@ export const Footer: React.FC = () => {
         const msg = data.message || 'Could not subscribe right now. Please try again.';
         setSubscribeError(msg);
         addToast('Subscription failed', msg, 'info');
+        resetTurnstile();
         return;
+      }
+
+      // Server could not reach Supabase (common on locked-down local Next.js) — persist from browser
+      if (data.clientPersist) {
+        const saved = await recordNewsletterSubscriber(email, 'footer-subscription');
+        if (!saved) {
+          const msg = 'Could not save your email right now. Please try again shortly.';
+          setSubscribeError(msg);
+          addToast('Subscription failed', msg, 'info');
+          resetTurnstile();
+          return;
+        }
       }
 
       try {
@@ -97,6 +147,7 @@ export const Footer: React.FC = () => {
       }
       setIsSubscribed(true);
       setFooterEmail('');
+      resetTurnstile();
       addToast(
         'Subscribed to Studio Journal',
         data.message || 'Welcome to Misty Bliss. 10% code applied to your next purchase.'
@@ -104,6 +155,7 @@ export const Footer: React.FC = () => {
     } catch {
       setSubscribeError('Network error. Please check your connection and try again.');
       addToast('Network error', 'Please try again in a moment.', 'info');
+      resetTurnstile();
     } finally {
       setIsSubmitting(false);
     }
@@ -112,7 +164,7 @@ export const Footer: React.FC = () => {
   const socialLinks = [
     {
       name: 'Instagram',
-      href: 'https://instagram.com',
+      href: 'https://www.instagram.com/mistybliss24?dlrf=NGQzd2lxbHVvdTZp',
       icon: <Instagram className="w-4 h-4" />,
       handle: '@mistyblisshome',
     },
@@ -138,9 +190,9 @@ export const Footer: React.FC = () => {
     },
     {
       name: 'Facebook',
-      href: 'https://facebook.com',
+      href: 'https://www.facebook.com/profile.php?id=61569343748374',
       icon: <Facebook className="w-4 h-4" />,
-      handle: 'Misty Bliss Décor',
+      handle: 'Misty Bliss Decor',
     },
     {
       name: 'YouTube',
@@ -225,7 +277,7 @@ export const Footer: React.FC = () => {
             </Link>
 
             <p className="text-xs text-[#A89F97] leading-relaxed max-w-sm">
-              Contemporary home décor, ceramics, and botanical arrangements curated for quiet beauty and tactile warmth in everyday living spaces.
+              Contemporary home decor, ceramics, and botanical arrangements curated for quiet beauty and tactile warmth in everyday living spaces.
             </p>
 
             {/* Social Icons Strip */}
@@ -234,7 +286,8 @@ export const Footer: React.FC = () => {
                 Follow Our Studio
               </span>
               <div className="flex items-center gap-2">
-                {socialLinks.map((social) => (
+                {/* Keep only channels with verified public profiles; add future icons here when links are ready. */}
+                {socialLinks.filter((social) => ['Instagram', 'Facebook'].includes(social.name)).map((social) => (
                   <a
                     key={social.name}
                     href={social.href}
@@ -253,7 +306,15 @@ export const Footer: React.FC = () => {
             {/* Studio location note */}
             <div className="pt-3 text-[11px] text-[#7E756D] border-t border-[#38332E]/80">
               <p>Studio Showroom & Workshop</p>
-              <p className="text-[#A89F97]">418 Mercer Walk, Portland, OR</p>
+              <p className="text-[#A89F97]">{SITE_ADDRESS}</p>
+              <a
+                href={`https://wa.me/${SITE_PHONE.replace(/\D/g, '')}`}
+                className="mt-1 flex items-center gap-1.5 text-[#A89F97] hover:text-white transition-colors"
+                aria-label={`Chat with Misty Bliss on WhatsApp at ${SITE_PHONE}`}
+              >
+                <Phone className="w-3 h-3" />
+                <span>WhatsApp: {SITE_PHONE}</span>
+              </a>
             </div>
           </div>
 
@@ -268,7 +329,7 @@ export const Footer: React.FC = () => {
               <ul className="space-y-2 text-[#C4BBB4]">
                 <li>
                   <Link href="/shop" className="hover:text-white transition-colors block py-0.5">
-                    All Home Décor
+                    All Home Decor
                   </Link>
                 </li>
                 <li>
@@ -426,13 +487,28 @@ export const Footer: React.FC = () => {
                     />
                     <button
                       type="submit"
-                      disabled={isSubmitting}
-                      className="px-3.5 py-2 bg-[#FAF8F5] hover:bg-[#F1E5E1] disabled:opacity-60 text-[#292522] rounded-md text-xs font-semibold transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+                      disabled={
+                        isSubmitting ||
+                        !isValidNewsletterEmail ||
+                        (turnstileConfigured && !turnstileToken)
+                      }
+                      className="px-3.5 py-2 bg-[#FAF8F5] hover:bg-[#F1E5E1] disabled:opacity-40 disabled:hover:bg-[#FAF8F5] disabled:cursor-not-allowed text-[#292522] rounded-md text-xs font-semibold transition-colors flex items-center justify-center shrink-0 cursor-pointer"
                       aria-label="Subscribe to newsletter"
+                      title={
+                        turnstileConfigured && !turnstileToken
+                          ? 'Wait for the security check to finish'
+                          : undefined
+                      }
                     >
                       <Send className="w-3.5 h-3.5" />
                     </button>
                   </form>
+                  <Turnstile
+                    key={widgetKey}
+                    onTokenChange={setTurnstileToken}
+                    theme="dark"
+                    controllerRef={turnstileControllerRef}
+                  />
                   {subscribeError && (
                     <p className="text-[11px] text-[#E8C5BE] leading-snug" role="alert">
                       {subscribeError}
@@ -477,7 +553,7 @@ export const Footer: React.FC = () => {
 
           {/* Legal & Copyright */}
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-[11px]">
-            <p>© {new Date().getFullYear()} Misty Bliss Home Décor.</p>
+            <p>© {new Date().getFullYear()} Misty Bliss Home Decor.</p>
             <div className="flex items-center gap-3">
               <Link href="/shipping-returns" className="hover:text-white transition-colors">
                 Privacy

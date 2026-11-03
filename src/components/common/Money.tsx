@@ -41,7 +41,7 @@ export const Money: React.FC<MoneyProps> = ({
           fontSize: '1em',
           lineHeight: 1,
           fontFamily:
-            '"Noto Sans Bengali", "Noto Sans", "Segoe UI", system-ui, sans-serif',
+            'var(--font-bengali), "Noto Sans Bengali", "Noto Sans", "Segoe UI", system-ui, sans-serif',
           // Pull symbol down slightly so it lines up with Latin digits
           position: 'relative',
           top: '0.08em',

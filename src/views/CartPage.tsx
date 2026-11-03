@@ -7,6 +7,7 @@ import { useShop } from '../context/ShopContext';
 import { ProductImage } from '../components/common/ProductImage';
 import { Plus, Minus, Trash2, ArrowRight, ShoppingBag, Tag, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { Money } from '../components/common/Money';
+import { Turnstile, useTurnstileToken, verifyTurnstile } from '../components/common/Turnstile';
 
 export const CartPage: React.FC = () => {
   const { navigate } = useRouter();
@@ -28,18 +29,41 @@ export const CartPage: React.FC = () => {
 
   const [promoInput, setPromoInput] = useState('');
   const [promoError, setPromoError] = useState('');
+  const {
+    setToken: setTurnstileToken,
+    widgetKey,
+    reset: resetTurnstile,
+    obtainToken,
+    controllerRef: turnstileControllerRef,
+  } = useTurnstileToken();
 
   const amountNeededForFreeShipping = Math.max(0, freeShippingThreshold - cartSubtotal);
   const freeShippingProgress = Math.min(100, (cartSubtotal / freeShippingThreshold) * 100);
 
-  const handleApplyPromo = (e: React.FormEvent) => {
+  const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault();
     setPromoError('');
+    let token: string | null = null;
+    try {
+      token = (await obtainToken()) || null;
+    } catch (err) {
+      setPromoError(err instanceof Error ? err.message : 'Please complete the security check.');
+      resetTurnstile();
+      return;
+    }
+    const turnstileError = await verifyTurnstile(token);
+    if (turnstileError) {
+      setPromoError(turnstileError);
+      resetTurnstile();
+      return;
+    }
     const result = applyPromoCode(promoInput);
     if (!result.success) {
       setPromoError(result.message);
+      resetTurnstile();
     } else {
       setPromoInput('');
+      resetTurnstile();
     }
   };
 
@@ -250,6 +274,11 @@ export const CartPage: React.FC = () => {
                     Apply
                   </button>
                 </div>
+                <Turnstile
+                  key={widgetKey}
+                  onTokenChange={setTurnstileToken}
+                  controllerRef={turnstileControllerRef}
+                />
                 {promoError && (
                   <p className="text-[11px] text-[#A84940]">{promoError}</p>
                 )}

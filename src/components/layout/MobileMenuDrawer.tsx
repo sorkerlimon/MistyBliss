@@ -38,7 +38,7 @@ export const MobileMenuDrawer: React.FC = () => {
   }, [isMobileMenuOpen, closeMobileMenu]);
 
   const drawerLinks = [
-    { label: 'All Décor', href: '/shop' },
+    { label: 'All Decor', href: '/shop' },
     { label: 'Vases & Ceramics', href: '/categories/vases-ceramics' },
     { label: 'Artificial Flowers & Botanicals', href: '/categories/artificial-flowers' },
     { label: 'Home Accessories', href: '/categories/home-accessories' },
@@ -110,7 +110,7 @@ export const MobileMenuDrawer: React.FC = () => {
               className="flex items-center gap-2.5 px-3 py-2 bg-[#FAF8F5] hover:bg-[#F1E5E1] border border-[#E9E3DE] hover:border-[#C77F79] rounded-lg text-xs text-[#77716C] transition-colors cursor-pointer"
             >
               <Search className="w-4 h-4 text-[#C77F79] shrink-0" />
-              <span className="font-medium text-[#292522]">Search décor, ceramics, lighting...</span>
+              <span className="font-medium text-[#292522]">Search decor, ceramics, lighting...</span>
             </Link>
           </div>
 

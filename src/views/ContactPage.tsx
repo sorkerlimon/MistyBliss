@@ -3,15 +3,49 @@
 import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
 import { Mail, Phone, MapPin, Send, Check } from 'lucide-react';
+import { SITE_ADDRESS, SITE_PHONE } from '../lib/site';
+import { Turnstile, useTurnstileToken, verifyTurnstile } from '../components/common/Turnstile';
 
 export const ContactPage: React.FC = () => {
   const { addToast } = useShop();
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const {
+    setToken: setTurnstileToken,
+    widgetKey,
+    reset: resetTurnstile,
+    obtainToken,
+    controllerRef: turnstileControllerRef,
+  } = useTurnstileToken();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
+    setIsSubmitting(true);
+
+    let token: string | null = null;
+    try {
+      token = (await obtainToken()) || null;
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Please complete the security check.');
+      resetTurnstile();
+      setIsSubmitting(false);
+      return;
+    }
+
+    const turnstileError = await verifyTurnstile(token);
+    if (turnstileError) {
+      setFormError(turnstileError);
+      resetTurnstile();
+      setIsSubmitting(false);
+      return;
+    }
+
     setSubmitted(true);
+    resetTurnstile();
+    setIsSubmitting(false);
     addToast('Message Dispatched', 'Thank you! Our studio concierge will reply within 24 hours.');
   };
 
@@ -39,8 +73,7 @@ export const ContactPage: React.FC = () => {
               <MapPin className="w-4 h-4 text-[#C77F79] shrink-0 mt-0.5" />
               <div>
                 <p className="font-medium text-[#292522]">Misty Bliss Studio & Workshop</p>
-                <p>418 Mercer Walk</p>
-                <p>Portland, OR 97201</p>
+                <p>{SITE_ADDRESS}</p>
               </div>
             </div>
 
@@ -51,7 +84,9 @@ export const ContactPage: React.FC = () => {
 
             <div className="flex items-center gap-3">
               <Phone className="w-4 h-4 text-[#C77F79] shrink-0" />
-              <p>+1 (503) 555-0192</p>
+              <a href={`https://wa.me/${SITE_PHONE.replace(/\D/g, '')}`} className="hover:text-[#292522] transition-colors">
+                WhatsApp: {SITE_PHONE}
+              </a>
             </div>
           </div>
 
@@ -124,11 +159,23 @@ export const ContactPage: React.FC = () => {
                 />
               </div>
 
+              <Turnstile
+                key={widgetKey}
+                onTokenChange={setTurnstileToken}
+                controllerRef={turnstileControllerRef}
+              />
+              {formError && (
+                <p className="text-[11px] text-[#A84940]" role="alert">
+                  {formError}
+                </p>
+              )}
+
               <button
                 type="submit"
-                className="w-full py-3 bg-[#292522] hover:bg-[#3D3834] text-white text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                disabled={isSubmitting}
+                className="w-full py-3 bg-[#292522] hover:bg-[#3D3834] disabled:opacity-60 text-white text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
               >
-                <span>Send Message</span>
+                <span>{isSubmitting ? 'Sending…' : 'Send Message'}</span>
                 <Send className="w-3.5 h-3.5" />
               </button>
             </form>

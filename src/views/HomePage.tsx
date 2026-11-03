@@ -143,7 +143,7 @@ export const HomePage: React.FC = () => {
                   href="/categories/artificial-flowers"
                   className="px-5 py-2.5 sm:px-6 sm:py-2.5 bg-white text-[#292522] hover:bg-[#F1E5E1] active:bg-[#FAF8F5] text-xs font-semibold rounded-md transition-colors inline-flex items-center gap-2 cursor-pointer shadow-xs"
                 >
-                  <span>Shop Floral Décor</span>
+                  <span>Shop Floral Decor</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>

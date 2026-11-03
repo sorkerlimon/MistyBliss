@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { useRouter } from '../context/RouterContext';
 import { useShop } from '../context/ShopContext';
 import { ProductImage } from '../components/common/ProductImage';
-import { CheckCircle2, ShieldCheck, ArrowRight, Truck, Lock, ShoppingBag } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, Truck, Lock, ShoppingBag, Banknote, CreditCard, WalletCards } from 'lucide-react';
 import { Money } from '../components/common/Money';
+import { Turnstile, useTurnstileToken, verifyTurnstile } from '../components/common/Turnstile';
 
 export const CheckoutPage: React.FC = () => {
   const { navigate } = useRouter();
@@ -32,17 +33,29 @@ export const CheckoutPage: React.FC = () => {
   const [state, setState] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [phone, setPhone] = useState('');
-  const [shippingSpeed, setShippingSpeed] = useState<'standard' | 'express'>('standard');
-  const paymentMethod: 'card' | 'cod' = 'card';
+  const shippingSpeed = 'standard' as const;
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cod' | 'bkash'>('cod');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderConfirmed, setOrderConfirmed] = useState<any | null>(null);
+  const {
+    setToken: setTurnstileToken,
+    widgetKey,
+    reset: resetTurnstile,
+    obtainToken,
+    controllerRef: turnstileControllerRef,
+  } = useTurnstileToken();
 
   // Calculations
-  const selectedShippingCost = shippingSpeed === 'express' ? 14.0 : shippingFee;
+  const selectedShippingCost = shippingFee;
   const estimatedTax = Math.round(cartSubtotal * 0.05 * 100) / 100;
   const finalTotal = Math.max(0, cartSubtotal - discountAmount + selectedShippingCost + estimatedTax);
+  const isCheckoutReady =
+    email.trim().includes('@') &&
+    [firstName, lastName, address, city, state, postalCode, phone].every((value) => value.trim()) &&
+    acceptedTerms;
 
   const validate = () => {
     const errors: Record<string, string> = {};
@@ -54,63 +67,83 @@ export const CheckoutPage: React.FC = () => {
     if (!state.trim()) errors.state = 'State is required';
     if (!postalCode.trim()) errors.postalCode = 'Postal code is required';
     if (!phone.trim()) errors.phone = 'Phone number is required';
+    if (!acceptedTerms) errors.terms = 'Please agree to the terms before confirming your order';
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      const orderItems = cart.map((i) => {
-        const prod = getProductById(i.productId);
-        return {
-          productId: i.productId,
-          name: prod?.name || 'Home Décor Item',
-          price: prod?.price || 0,
-          quantity: i.quantity,
-          selectedColor: i.selectedColor,
-          image: prod?.images[0],
-        };
-      });
-
-      const newOrder = createOrder({
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        customerName: `${firstName} ${lastName}`.trim(),
-        customerEmail: email,
-        customerPhone: phone,
-        shippingAddress: `${address}${apartment ? ', ' + apartment : ''}, ${city}, ${state} ${postalCode}`,
-        items: orderItems,
-        subtotal: cartSubtotal,
-        discount: discountAmount,
-        shippingFee: selectedShippingCost,
-        total: finalTotal,
-        paymentMethod,
-        shippingSpeed,
-      });
-
-      const confirmedOrder = {
-        orderNumber: newOrder.id,
-        date: newOrder.date,
-        items: cart.map((i) => ({
-          ...i,
-          product: getProductById(i.productId),
-        })),
-        shippingAddress: newOrder.shippingAddress,
-        email,
-        phone,
-        total: finalTotal,
-        paymentMethod,
-        shippingSpeed,
-      };
-
-      setOrderConfirmed(confirmedOrder);
-      clearCart();
+    let token: string | null = null;
+    try {
+      token = (await obtainToken()) || null;
+    } catch (err) {
+      setFormErrors((errors) => ({
+        ...errors,
+        turnstile: err instanceof Error ? err.message : 'Please complete the security check.',
+      }));
+      resetTurnstile();
       setIsSubmitting(false);
-    }, 700);
+      return;
+    }
+    const turnstileError = await verifyTurnstile(token);
+    if (turnstileError) {
+      setFormErrors((errors) => ({ ...errors, turnstile: turnstileError }));
+      resetTurnstile();
+      setIsSubmitting(false);
+      return;
+    }
+
+    const orderItems = cart.map((i) => {
+      const prod = getProductById(i.productId);
+      return {
+        productId: i.productId,
+        name: prod?.name || 'Home Decor Item',
+        price: prod?.price || 0,
+        quantity: i.quantity,
+        selectedColor: i.selectedColor,
+        image: prod?.images[0],
+      };
+    });
+
+    const newOrder = createOrder({
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      customerName: `${firstName} ${lastName}`.trim(),
+      customerEmail: email,
+      customerPhone: phone,
+      shippingAddress: `${address}${apartment ? ', ' + apartment : ''}, ${city}, ${state} ${postalCode}`,
+      items: orderItems,
+      subtotal: cartSubtotal,
+      discount: discountAmount,
+      shippingFee: selectedShippingCost,
+      total: finalTotal,
+      paymentMethod,
+      shippingSpeed,
+    });
+
+    const confirmedOrder = {
+      orderNumber: newOrder.id,
+      date: newOrder.date,
+      items: cart.map((i) => ({
+        ...i,
+        product: getProductById(i.productId),
+      })),
+      shippingAddress: newOrder.shippingAddress,
+      email,
+      phone,
+      total: finalTotal,
+      paymentMethod,
+      shippingSpeed,
+    };
+
+    setOrderConfirmed(confirmedOrder);
+    clearCart();
+    resetTurnstile();
+    setIsSubmitting(false);
   };
 
   if (orderConfirmed) {
@@ -218,7 +251,7 @@ export const CheckoutPage: React.FC = () => {
             href="/shop"
             className="w-full sm:w-auto px-5 py-2.5 bg-[#292522] hover:bg-[#3D3834] text-white text-xs font-semibold rounded-md transition-colors text-center cursor-pointer shadow-xs"
           >
-            Explore Décor Catalog
+            Explore Decor Catalog
           </Link>
         </div>
       </div>
@@ -400,59 +433,6 @@ export const CheckoutPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Step 3: Delivery Options */}
-          <div className="bg-white p-5 sm:p-6 rounded-xl border border-[#E9E3DE] space-y-3 text-xs">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-[#292522] flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-[#292522] text-white text-[10px] flex items-center justify-center font-bold">3</span>
-              Delivery Option
-            </h2>
-
-            <div className="space-y-2">
-              <label
-                className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
-                  shippingSpeed === 'standard' ? 'border-[#C77F79] bg-[#FAF8F5]' : 'border-[#E9E3DE]'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="shipping"
-                    checked={shippingSpeed === 'standard'}
-                    onChange={() => setShippingSpeed('standard')}
-                    className="accent-[#C77F79]"
-                  />
-                  <div>
-                    <p className="font-semibold text-[#292522]">Standard Carbon-Neutral Delivery</p>
-                    <p className="text-[#77716C] text-[11px]">3–5 business days</p>
-                  </div>
-                </div>
-                <span className="font-semibold text-[#292522] tabular-nums">
-                  {shippingFee === 0 ? <span className="text-[#89947D]">FREE</span> : <Money amount={shippingFee} />}
-                </span>
-              </label>
-
-              <label
-                className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
-                  shippingSpeed === 'express' ? 'border-[#C77F79] bg-[#FAF8F5]' : 'border-[#E9E3DE]'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="shipping"
-                    checked={shippingSpeed === 'express'}
-                    onChange={() => setShippingSpeed('express')}
-                    className="accent-[#C77F79]"
-                  />
-                  <div>
-                    <p className="font-semibold text-[#292522]">Expedited Priority Delivery</p>
-                    <p className="text-[#77716C] text-[11px]">1–2 business days via FedEx Air</p>
-                  </div>
-                </div>
-                <span className="font-semibold text-[#292522] tabular-nums"><Money amount={14} /></span>
-              </label>
-            </div>
-          </div>
         </div>
 
         {/* Right: Order Summary Sidebar (5 cols) */}
@@ -519,24 +499,60 @@ export const CheckoutPage: React.FC = () => {
             </div>
           </div>
 
+          <fieldset className="pt-1 space-y-2.5">
+            <legend className="text-sm font-semibold uppercase tracking-wider text-[#292522]">Payment Method</legend>
+            <label className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer ${paymentMethod === 'cod' ? 'border-[#292522] bg-[#FAF8F5]' : 'border-[#E9E3DE]'}`}>
+              <input type="radio" name="payment-method" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} className="accent-[#292522]" />
+              <span className="w-8 h-8 rounded bg-[#FFF1C9] text-[#B77A18] flex items-center justify-center shrink-0"><Banknote className="w-4 h-4" /></span>
+              <span><span className="flex items-center gap-2 font-semibold text-[#292522]">Cash on Delivery <span className="rounded bg-[#E9E3DE] px-1.5 py-0.5 text-[8px] uppercase text-[#77716C]">Popular</span></span><span className="block text-[10px] text-[#77716C] mt-0.5">Pay when your order arrives.</span></span>
+            </label>
+            <label className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer ${paymentMethod === 'card' ? 'border-[#292522] bg-[#FAF8F5]' : 'border-[#E9E3DE]'}`}>
+              <input type="radio" name="payment-method" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} className="accent-[#292522]" />
+              <span className="w-8 h-8 rounded bg-[#E3F0FF] text-[#4C85CA] flex items-center justify-center shrink-0"><CreditCard className="w-4 h-4" /></span>
+              <span><span className="flex items-center gap-2 font-semibold text-[#292522]">Card Payment <span className="rounded bg-[#DDF2E6] px-1.5 py-0.5 text-[8px] uppercase text-[#4E8061]">Secure</span></span><span className="block text-[10px] text-[#77716C] mt-0.5">Visa, Mastercard, and Amex.</span></span>
+            </label>
+            <label className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer ${paymentMethod === 'bkash' ? 'border-[#292522] bg-[#FAF8F5]' : 'border-[#E9E3DE]'}`}>
+              <input type="radio" name="payment-method" checked={paymentMethod === 'bkash'} onChange={() => setPaymentMethod('bkash')} className="accent-[#292522]" />
+              <span className="w-8 h-8 rounded bg-[#FFE7EF] text-[#D12067] flex items-center justify-center shrink-0"><WalletCards className="w-4 h-4" /></span>
+              <span><span className="font-semibold text-[#292522]">bKash</span><span className="block text-[10px] text-[#77716C] mt-0.5">Pay with your bKash mobile wallet.</span></span>
+            </label>
+          </fieldset>
+
+          <label className="flex items-start gap-2 pt-1 text-[11px] text-[#77716C] cursor-pointer">
+            <input type="checkbox" checked={acceptedTerms} onChange={(e) => { setAcceptedTerms(e.target.checked); if (formErrors.terms) setFormErrors((errors) => ({ ...errors, terms: '' })); }} className="mt-0.5 accent-[#292522]" />
+            <span>I agree to the <Link href="/shipping-returns" className="underline underline-offset-2 hover:text-[#292522]">Terms &amp; Conditions</Link>, <Link href="/shipping-returns" className="underline underline-offset-2 hover:text-[#292522]">Refund Policy</Link>, and <Link href="/shipping-returns" className="underline underline-offset-2 hover:text-[#292522]">Privacy Policy</Link>.</span>
+          </label>
+          {formErrors.terms && <p className="text-[10px] text-[#A84940] -mt-2">{formErrors.terms}</p>}
+
+          <Turnstile
+            key={widgetKey}
+            onTokenChange={setTurnstileToken}
+            controllerRef={turnstileControllerRef}
+          />
+          {formErrors.turnstile && (
+            <p className="text-[10px] text-[#A84940]" role="alert">
+              {formErrors.turnstile}
+            </p>
+          )}
+
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isCheckoutReady}
             className="w-full py-3.5 px-6 bg-[#292522] hover:bg-[#3D3834] text-white text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer"
           >
             {isSubmitting ? (
               <span>Placing Order...</span>
             ) : (
               <>
-                <span>Place Order · <Money amount={finalTotal} className="font-semibold text-white" /></span>
-                <ArrowRight className="w-4 h-4" />
+                <Lock className="w-3.5 h-3.5" />
+                <span>Confirm Order · <Money amount={finalTotal} className="font-semibold text-white" /></span>
               </>
             )}
           </button>
 
           <div className="pt-1 text-[11px] text-[#77716C] flex items-center justify-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-[#89947D]" />
-            <span>Encrypted & secure checkout</span>
+            <span>Secure payment · Easy returns · Fast delivery</span>
           </div>
         </div>
 

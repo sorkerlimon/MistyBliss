@@ -36,7 +36,7 @@ export const SearchPage: React.FC = () => {
     'Pleated Lamp',
     'Belgian Linen',
     'Soy Candle',
-    'Bouclé Cushion',
+    'Boucle Cushion',
     'Pampas Grass',
     'Gifts',
   ];
@@ -140,7 +140,7 @@ export const SearchPage: React.FC = () => {
           <span>Curated Product Search</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-heading font-bold text-[#292522] tracking-tight">
-          Find Your Perfect Home Décor
+          Find Your Perfect Home Decor
         </h1>
         <p className="text-sm text-[#77716C] max-w-xl mx-auto">
           Explore artisanal stoneware ceramics, lifelike botanicals, warm lighting, and textured accents.

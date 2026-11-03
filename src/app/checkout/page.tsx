@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Checkout | Misty Bliss',
-  description: 'Complete your artisanal home décor order securely.',
+  description: 'Complete your artisanal home decor order securely.',
 };
 
 export default function Checkout() {

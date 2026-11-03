@@ -7,6 +7,7 @@ import { useRouter } from '../../context/RouterContext';
 import { ProductImage } from '../common/ProductImage';
 import { X, Plus, Minus, Trash2, ArrowRight, ShoppingBag, Tag, CheckCircle2 } from 'lucide-react';
 import { Money } from '../common/Money';
+import { Turnstile, useTurnstileToken, verifyTurnstile } from '../common/Turnstile';
 
 export const CartDrawer: React.FC = () => {
   const {
@@ -30,20 +31,43 @@ export const CartDrawer: React.FC = () => {
   const { navigate } = useRouter();
   const [promoInput, setPromoInput] = useState('');
   const [promoError, setPromoError] = useState('');
+  const {
+    setToken: setTurnstileToken,
+    widgetKey,
+    reset: resetTurnstile,
+    obtainToken,
+    controllerRef: turnstileControllerRef,
+  } = useTurnstileToken();
 
   if (!isCartDrawerOpen) return null;
 
   const amountNeededForFreeShipping = Math.max(0, freeShippingThreshold - cartSubtotal);
   const freeShippingProgress = Math.min(100, (cartSubtotal / freeShippingThreshold) * 100);
 
-  const handleApplyPromo = (e: React.FormEvent) => {
+  const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault();
     setPromoError('');
+    let token: string | null = null;
+    try {
+      token = (await obtainToken()) || null;
+    } catch (err) {
+      setPromoError(err instanceof Error ? err.message : 'Please complete the security check.');
+      resetTurnstile();
+      return;
+    }
+    const turnstileError = await verifyTurnstile(token);
+    if (turnstileError) {
+      setPromoError(turnstileError);
+      resetTurnstile();
+      return;
+    }
     const result = applyPromoCode(promoInput);
     if (!result.success) {
       setPromoError(result.message);
+      resetTurnstile();
     } else {
       setPromoInput('');
+      resetTurnstile();
     }
   };
 
@@ -229,20 +253,27 @@ export const CartDrawer: React.FC = () => {
                     </button>
                   </div>
                 ) : (
-                  <form onSubmit={handleApplyPromo} className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Promo code (try BLISS15)"
-                      value={promoInput}
-                      onChange={(e) => setPromoInput(e.target.value)}
-                      className="flex-1 px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E9E3DE] rounded focus:outline-none focus:ring-1 focus:ring-[#C77F79]"
+                  <form onSubmit={handleApplyPromo} className="space-y-1">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Promo code (try BLISS15)"
+                        value={promoInput}
+                        onChange={(e) => setPromoInput(e.target.value)}
+                        className="flex-1 px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E9E3DE] rounded focus:outline-none focus:ring-1 focus:ring-[#C77F79]"
+                      />
+                      <button
+                        type="submit"
+                        className="px-3 py-1.5 text-xs font-medium bg-[#292522] text-white rounded hover:bg-[#3D3834] transition-colors"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                    <Turnstile
+                      key={widgetKey}
+                      onTokenChange={setTurnstileToken}
+                      controllerRef={turnstileControllerRef}
                     />
-                    <button
-                      type="submit"
-                      className="px-3 py-1.5 text-xs font-medium bg-[#292522] text-white rounded hover:bg-[#3D3834] transition-colors"
-                    >
-                      Apply
-                    </button>
                   </form>
                 )}
                 {promoError && (

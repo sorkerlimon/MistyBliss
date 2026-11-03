@@ -237,7 +237,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
     if (saleOnly) return 'Special Offers & Archive Sale';
     if (newOnly) return 'New Spring Arrivals';
     if (bestsellerOnly) return 'Customer Bestsellers';
-    return 'All Home Décor & Living';
+    return 'All Home Decor & Living';
   };
 
   return (

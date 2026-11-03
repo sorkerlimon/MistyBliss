@@ -24,6 +24,7 @@ import { BlogAdminPanel } from './BlogAdminPanel';
 import { NewsletterAdminPanel } from './NewsletterAdminPanel';
 import { AdminDashboard } from './AdminDashboard';
 import { Money } from '../../components/common/Money';
+import { Turnstile, useTurnstileToken } from '../../components/common/Turnstile';
 
 type AdminTab =
   | 'dashboard'
@@ -56,6 +57,13 @@ export const AdminPortal: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [sessionEmail, setSessionEmail] = useState('');
+  const {
+    setToken: setTurnstileToken,
+    widgetKey,
+    reset: resetTurnstile,
+    obtainToken,
+    controllerRef: turnstileControllerRef,
+  } = useTurnstileToken();
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -91,33 +99,51 @@ export const AdminPortal: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
     setIsSubmitting(true);
+
+    let turnstileToken: string | null = null;
+    try {
+      turnstileToken = (await obtainToken()) || null;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Please complete the security check.');
+      resetTurnstile();
+      setIsSubmitting(false);
+      return;
+    }
 
     const cleanedEmail = cleanCredential(email);
     const cleanedPass = cleanCredential(password);
     let success = false;
 
-    // Prefer server-side check (ADMIN_EMAIL / ADMIN_PASSWORD from env or Worker secrets)
+    // Prefer server-side check (ADMIN_EMAIL / ADMIN_PASSWORD + Turnstile from env / Worker secrets)
     try {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: cleanedEmail, password: cleanedPass }),
+        body: JSON.stringify({
+          email: cleanedEmail,
+          password: cleanedPass,
+          turnstileToken,
+        }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          completeAdminSession(data.email || cleanedEmail);
-          setSessionEmail((data.email || cleanedEmail).toLowerCase());
-          success = true;
-        }
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        completeAdminSession(data.email || cleanedEmail);
+        setSessionEmail((data.email || cleanedEmail).toLowerCase());
+        success = true;
+      } else if (data.code === 'turnstile_failed') {
+        setError(data.message || 'Security verification failed. Please try again.');
+        resetTurnstile();
+        setIsSubmitting(false);
+        return;
       }
     } catch (apiErr) {
       console.warn('API login check failed:', apiErr);
     }
 
-    // Local fallback only when env credentials are available in the client bundle
-    if (!success) {
+    // Local fallback only when API unreachable and Turnstile is not configured
+    if (!success && !process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
       success = adminLogin(cleanedEmail, cleanedPass);
       if (success) setSessionEmail(cleanedEmail.toLowerCase());
     }
@@ -125,6 +151,7 @@ export const AdminPortal: React.FC = () => {
     setIsSubmitting(false);
 
     if (!success) {
+      resetTurnstile();
       setError('Invalid admin credentials. Please try again.');
     }
   };
@@ -185,6 +212,12 @@ export const AdminPortal: React.FC = () => {
                 </button>
               </div>
             </div>
+
+            <Turnstile
+              key={widgetKey}
+              onTokenChange={setTurnstileToken}
+              controllerRef={turnstileControllerRef}
+            />
 
             {error && (
               <div className="p-2.5 bg-[#FAF0F0] border border-[#F2D7D5] rounded-md text-[11px] text-[#A84940] leading-tight">

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { verifyTurnstileToken } from '../../../lib/turnstile';
+import { isSupabaseConfigured, supabase } from '../../../lib/supabase';
+
+export const runtime = 'nodejs';
 
 const RATE_LIMIT_MS = 60_000;
 const MIN_FILL_MS = 1_500;
@@ -25,13 +28,6 @@ function getClientIp(req: NextRequest): string {
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 254;
-}
-
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key);
 }
 
 export async function POST(req: NextRequest) {
@@ -89,6 +85,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const verification = await verifyTurnstileToken(req, body.turnstileToken);
+    if (!verification.success) {
+      return NextResponse.json(
+        { success: false, code: 'turnstile_failed', message: verification.reason },
+        { status: 400 }
+      );
+    }
+
     pruneBuckets(now);
     const keys = [`email:${email}`, `ip:${ip}`];
     for (const key of keys) {
@@ -110,27 +114,47 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const supabase = getSupabase();
-    if (!supabase) {
+    if (!isSupabaseConfigured) {
       return NextResponse.json(
         { success: false, message: 'Newsletter service is temporarily unavailable.' },
         { status: 503 }
       );
     }
 
+    // Prefer insert; if email exists, treat as success (idempotent subscribe)
     const { error } = await supabase.from('newsletter_subscribers').upsert(
       {
         email,
         source,
-        created_at: new Date().toISOString(),
       },
-      { onConflict: 'email' }
+      { onConflict: 'email', ignoreDuplicates: true }
     );
 
     if (error) {
-      console.warn('Newsletter save error:', error.message);
+      const networkBlocked = /fetch failed|EACCES|ENOTFOUND|ETIMEDOUT/i.test(
+        `${error.message || ''} ${error.details || ''}`
+      );
+      console.warn('Newsletter save error:', error.code, error.message, error.details);
+
+      // Local Next.js on Windows is often blocked from outbound HTTPS (same as Turnstile siteverify).
+      // Ask the browser to persist — the client can reach Supabase.
+      if (networkBlocked) {
+        for (const key of keys) rateBuckets.set(key, now);
+        return NextResponse.json({
+          success: true,
+          clientPersist: true,
+          message: 'Welcome to the Misty Bliss Design Circle. Check your inbox for code WELCOME10.',
+        });
+      }
+
       return NextResponse.json(
-        { success: false, message: 'Could not save your email right now. Please try again shortly.' },
+        {
+          success: false,
+          message: 'Could not save your email right now. Please try again shortly.',
+          ...(process.env.NODE_ENV === 'development'
+            ? { debug: { code: error.code, details: error.message } }
+            : {}),
+        },
         { status: 500 }
       );
     }
