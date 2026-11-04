@@ -506,16 +506,20 @@ export const CheckoutPage: React.FC = () => {
               <span className="w-8 h-8 rounded bg-[#FFF1C9] text-[#B77A18] flex items-center justify-center shrink-0"><Banknote className="w-4 h-4" /></span>
               <span><span className="flex items-center gap-2 font-semibold text-[#292522]">Cash on Delivery <span className="rounded bg-[#E9E3DE] px-1.5 py-0.5 text-[8px] uppercase text-[#77716C]">Popular</span></span><span className="block text-[10px] text-[#77716C] mt-0.5">Pay when your order arrives.</span></span>
             </label>
+            {/* Temporarily disabled — Card Payment
             <label className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer ${paymentMethod === 'card' ? 'border-[#292522] bg-[#FAF8F5]' : 'border-[#E9E3DE]'}`}>
               <input type="radio" name="payment-method" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} className="accent-[#292522]" />
               <span className="w-8 h-8 rounded bg-[#E3F0FF] text-[#4C85CA] flex items-center justify-center shrink-0"><CreditCard className="w-4 h-4" /></span>
               <span><span className="flex items-center gap-2 font-semibold text-[#292522]">Card Payment <span className="rounded bg-[#DDF2E6] px-1.5 py-0.5 text-[8px] uppercase text-[#4E8061]">Secure</span></span><span className="block text-[10px] text-[#77716C] mt-0.5">Visa, Mastercard, and Amex.</span></span>
             </label>
+            */}
+            {/* Temporarily disabled — bKash
             <label className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer ${paymentMethod === 'bkash' ? 'border-[#292522] bg-[#FAF8F5]' : 'border-[#E9E3DE]'}`}>
               <input type="radio" name="payment-method" checked={paymentMethod === 'bkash'} onChange={() => setPaymentMethod('bkash')} className="accent-[#292522]" />
               <span className="w-8 h-8 rounded bg-[#FFE7EF] text-[#D12067] flex items-center justify-center shrink-0"><WalletCards className="w-4 h-4" /></span>
               <span><span className="font-semibold text-[#292522]">bKash</span><span className="block text-[10px] text-[#77716C] mt-0.5">Pay with your bKash mobile wallet.</span></span>
             </label>
+            */}
           </fieldset>
 
           <label className="flex items-start gap-2 pt-1 text-[11px] text-[#77716C] cursor-pointer">

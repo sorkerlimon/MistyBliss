@@ -6,7 +6,7 @@ export const SITE_NAME = 'Misty Bliss';
 export const SITE_PHONE = '+880 1815-538018';
 export const SITE_EMAIL = 'concierge@mistybliss.online';
 export const SITE_WHATSAPP = '8801815538018';
-export const SITE_ADDRESS = 'Bedum Rokeya Saroni, Dhaka, Bangladesh';
+export const SITE_ADDRESS = 'Begum Rokeya Saroni, Dhaka, Bangladesh';
 
 /** Primary SEO keywords aligned with Bangladesh home-decor search intent */
 export const PRIMARY_KEYWORDS = [
