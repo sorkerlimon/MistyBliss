@@ -152,6 +152,33 @@ export interface PromoCode {
   expiryDate: string;
 }
 
+/** Delivery zone shown at checkout when delivery charges are enabled. */
+export interface DeliveryZone {
+  id: string;
+  name: string;
+  fee: number;
+  active: boolean;
+}
+
+/** Store-wide delivery + tax settings managed in admin. */
+export interface ShopSettings {
+  deliveryEnabled: boolean;
+  deliveryZones: DeliveryZone[];
+  taxEnabled: boolean;
+  /** Sales tax as a percent of cart subtotal (e.g. 5 = 5%). */
+  taxPercent: number;
+}
+
+export const DEFAULT_SHOP_SETTINGS: ShopSettings = {
+  deliveryEnabled: true,
+  deliveryZones: [
+    { id: 'zone-dhaka-city', name: 'Dhaka City', fee: 85, active: true },
+    { id: 'zone-outside-dhaka', name: 'Outside Dhaka', fee: 180, active: true },
+  ],
+  taxEnabled: false,
+  taxPercent: 5,
+};
+
 export type BlogCategory =
   | 'Studio Craft'
   | 'Interior Styling'

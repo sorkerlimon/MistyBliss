@@ -16,11 +16,10 @@ export const CartDrawer: React.FC = () => {
     cart,
     cartCount,
     cartSubtotal,
-    shippingFee,
-    freeShippingThreshold,
     promoDiscount,
     discountAmount,
     cartTotal,
+    shopSettings,
     updateQuantity,
     removeFromCart,
     applyPromoCode,
@@ -41,8 +40,12 @@ export const CartDrawer: React.FC = () => {
 
   if (!isCartDrawerOpen) return null;
 
-  const amountNeededForFreeShipping = Math.max(0, freeShippingThreshold - cartSubtotal);
-  const freeShippingProgress = Math.min(100, (cartSubtotal / freeShippingThreshold) * 100);
+  const activeZones = shopSettings.deliveryZones.filter((z) => z.active);
+  const deliveryHint = shopSettings.deliveryEnabled
+    ? activeZones.length
+      ? `Delivery from ৳${Math.min(...activeZones.map((z) => z.fee)).toLocaleString('en-BD')} — select at checkout`
+      : 'Delivery calculated at checkout'
+    : null;
 
   const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,25 +112,14 @@ export const CartDrawer: React.FC = () => {
             </button>
           </div>
 
-          {/* Free Shipping Meter */}
-          <div className="bg-[#FAF8F5] px-5 py-3 border-b border-[#E9E3DE] text-xs">
-            {amountNeededForFreeShipping > 0 ? (
-              <p className="text-[#292522] mb-1.5 font-medium">
-                Add <span className="font-semibold text-[#C77F79]"><Money amount={amountNeededForFreeShipping} className="font-semibold text-[#C77F79]" /></span> more to unlock <span className="font-semibold">Free Shipping</span>
+          {deliveryHint && (
+            <div className="bg-[#FAF8F5] px-5 py-3 border-b border-[#E9E3DE] text-xs">
+              <p className="text-[#292522] font-medium flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#C77F79] shrink-0" />
+                {deliveryHint}
               </p>
-            ) : (
-              <p className="text-[#89947D] mb-1.5 font-semibold flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                You qualified for Free Standard Shipping!
-              </p>
-            )}
-            <div className="w-full bg-[#E9E3DE] h-1.5 rounded-full overflow-hidden">
-              <div
-                className="bg-[#C77F79] h-full transition-all duration-300"
-                style={{ width: `${freeShippingProgress}%` }}
-              />
             </div>
-          </div>
+          )}
 
           {/* Cart Items List */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
@@ -295,12 +287,18 @@ export const CartDrawer: React.FC = () => {
                   </div>
                 )}
 
-                <div className="flex justify-between">
-                  <span>Standard Shipping</span>
-                  <span className="font-medium text-[#292522] tabular-nums">
-                    {shippingFee === 0 ? <span className="text-[#89947D]">FREE</span> : <Money amount={shippingFee} />}
-                  </span>
-                </div>
+                {shopSettings.deliveryEnabled && (
+                  <div className="flex justify-between">
+                    <span>Delivery</span>
+                    <span className="text-[#77716C] italic">Select at checkout</span>
+                  </div>
+                )}
+                {shopSettings.taxEnabled && (
+                  <div className="flex justify-between">
+                    <span>Tax ({shopSettings.taxPercent}%)</span>
+                    <span className="text-[#77716C] italic">At checkout</span>
+                  </div>
+                )}
 
                 <div className="flex justify-between text-sm font-semibold text-[#292522] pt-2 border-t border-[#E9E3DE]">
                   <span>Estimated Total</span>

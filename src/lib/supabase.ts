@@ -10,6 +10,9 @@ import {
   RoomType,
   BlogPost,
   NewsletterSubscriber,
+  ShopSettings,
+  DeliveryZone,
+  DEFAULT_SHOP_SETTINGS,
 } from '../types';
 
 /** Normalize display copy — e.g. Décor → Decor */
@@ -64,6 +67,7 @@ export interface ConnectionTestResult {
     categories: boolean;
     rooms: boolean;
     blog_posts: boolean;
+    shop_settings: boolean;
   };
 }
 
@@ -75,16 +79,25 @@ export async function testSupabaseConnection(): Promise<ConnectionTestResult> {
   const startTime = Date.now();
   try {
     // Probe a real table instead of the REST root (which 401s with sb_publishable_ keys)
-    const [productsProbe, ordersProbe, promosProbe, subscribersProbe, categoriesProbe, roomsProbe, blogProbe] =
-      await Promise.allSettled([
-        supabase.from('products').select('id').limit(1),
-        supabase.from('orders').select('id').limit(1),
-        supabase.from('promo_codes').select('id').limit(1),
-        supabase.from('newsletter_subscribers').select('id').limit(1),
-        supabase.from('categories').select('id').limit(1),
-        supabase.from('rooms').select('id').limit(1),
-        supabase.from('blog_posts').select('id').limit(1),
-      ]);
+    const [
+      productsProbe,
+      ordersProbe,
+      promosProbe,
+      subscribersProbe,
+      categoriesProbe,
+      roomsProbe,
+      blogProbe,
+      settingsProbe,
+    ] = await Promise.allSettled([
+      supabase.from('products').select('id').limit(1),
+      supabase.from('orders').select('id').limit(1),
+      supabase.from('promo_codes').select('id').limit(1),
+      supabase.from('newsletter_subscribers').select('id').limit(1),
+      supabase.from('categories').select('id').limit(1),
+      supabase.from('rooms').select('id').limit(1),
+      supabase.from('blog_posts').select('id').limit(1),
+      supabase.from('shop_settings').select('id').limit(1),
+    ]);
 
     const latencyMs = Date.now() - startTime;
 
@@ -96,6 +109,7 @@ export async function testSupabaseConnection(): Promise<ConnectionTestResult> {
       categories: categoriesProbe.status === 'fulfilled' && !categoriesProbe.value.error,
       rooms: roomsProbe.status === 'fulfilled' && !roomsProbe.value.error,
       blog_posts: blogProbe.status === 'fulfilled' && !blogProbe.value.error,
+      shop_settings: settingsProbe.status === 'fulfilled' && !settingsProbe.value.error,
     };
 
     const hasAnyTable = Object.values(tablesStatus).some(Boolean);
@@ -747,6 +761,64 @@ export async function deleteSupabaseNewsletterSubscriber(id: number | string): P
   }
 }
 
+function mapShopSettingsRow(item: any): ShopSettings {
+  const zonesRaw = Array.isArray(item?.delivery_zones) ? item.delivery_zones : [];
+  const deliveryZones: DeliveryZone[] = zonesRaw
+    .map((z: any, index: number) => ({
+      id: String(z?.id || `zone-${index + 1}`),
+      name: String(z?.name || 'Zone').trim() || 'Zone',
+      fee: Number(z?.fee) || 0,
+      active: z?.active !== false,
+    }))
+    .filter((z: DeliveryZone) => z.name);
+
+  return {
+    deliveryEnabled: item?.delivery_enabled !== false,
+    deliveryZones: deliveryZones.length > 0 ? deliveryZones : DEFAULT_SHOP_SETTINGS.deliveryZones,
+    taxEnabled: Boolean(item?.tax_enabled),
+    taxPercent: Number.isFinite(Number(item?.tax_percent)) ? Number(item.tax_percent) : 0,
+  };
+}
+
+/**
+ * Fetch shop delivery/tax settings (single default row).
+ */
+export async function fetchSupabaseShopSettings(): Promise<ShopSettings | null> {
+  try {
+    const { data, error } = await supabase
+      .from('shop_settings')
+      .select('id, delivery_enabled, delivery_zones, tax_enabled, tax_percent')
+      .eq('id', 'default')
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return mapShopSettingsRow(data);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Upsert shop delivery/tax settings.
+ */
+export async function upsertSupabaseShopSettings(settings: ShopSettings): Promise<boolean> {
+  try {
+    const payload = {
+      id: 'default',
+      delivery_enabled: settings.deliveryEnabled,
+      delivery_zones: settings.deliveryZones,
+      tax_enabled: settings.taxEnabled,
+      tax_percent: settings.taxPercent,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase.from('shop_settings').upsert(payload, { onConflict: 'id' });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Seed initial sample catalog and orders into Supabase
  */
@@ -938,6 +1010,32 @@ VALUES
     'standard',
     'Customer requested fragile package marking.'
   )
+ON CONFLICT (id) DO NOTHING;
+
+-- 10. Shop Settings (delivery zones + tax)
+CREATE TABLE IF NOT EXISTS public.shop_settings (
+  id TEXT PRIMARY KEY DEFAULT 'default',
+  delivery_enabled BOOLEAN NOT NULL DEFAULT true,
+  delivery_zones JSONB NOT NULL DEFAULT '[]'::jsonb,
+  tax_enabled BOOLEAN NOT NULL DEFAULT false,
+  tax_percent NUMERIC(6, 2) NOT NULL DEFAULT 0,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.shop_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read shop_settings" ON public.shop_settings;
+DROP POLICY IF EXISTS "Public write shop_settings" ON public.shop_settings;
+CREATE POLICY "Public read shop_settings" ON public.shop_settings FOR SELECT USING (true);
+CREATE POLICY "Public write shop_settings" ON public.shop_settings FOR ALL USING (true) WITH CHECK (true);
+
+INSERT INTO public.shop_settings (id, delivery_enabled, delivery_zones, tax_enabled, tax_percent)
+VALUES (
+  'default',
+  true,
+  '[{"id":"zone-dhaka-city","name":"Dhaka City","fee":85,"active":true},{"id":"zone-outside-dhaka","name":"Outside Dhaka","fee":180,"active":true}]'::jsonb,
+  false,
+  5
+)
 ON CONFLICT (id) DO NOTHING;
 `;
 

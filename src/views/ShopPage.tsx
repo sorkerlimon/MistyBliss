@@ -71,16 +71,11 @@ export const ShopPage: React.FC<ShopPageProps> = ({
     }
   }, [initialCategory, initialCollection, route.searchParams]);
 
-  // Distinct materials from products
+  // Distinct materials from products (storefront filter allowlist)
   const materials = useMemo(() => {
     const set = new Set<string>();
     products.forEach((p) => {
-      if (p.material.includes('Stoneware')) set.add('Stoneware');
       if (p.material.includes('Linen')) set.add('Linen');
-      if (p.material.includes('Travertine')) set.add('Travertine');
-      if (p.material.includes('Brass')) set.add('Brass');
-      if (p.material.includes('Terracotta')) set.add('Terracotta');
-      if (p.material.includes('Glass')) set.add('Glass');
       if (p.material.includes('Cotton')) set.add('Cotton');
     });
     return Array.from(set);

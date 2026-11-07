@@ -15,6 +15,7 @@ import {
   BookOpen,
   Mail,
   LayoutDashboard,
+  Truck,
 } from 'lucide-react';
 import { cleanCredential } from '../../lib/adminConfig';
 import { CategoryAdminPanel } from './CategoryAdminPanel';
@@ -22,6 +23,7 @@ import { ProductAdminPanel } from './ProductAdminPanel';
 import { PromoAdminPanel } from './PromoAdminPanel';
 import { BlogAdminPanel } from './BlogAdminPanel';
 import { NewsletterAdminPanel } from './NewsletterAdminPanel';
+import { ShippingTaxAdminPanel } from './ShippingTaxAdminPanel';
 import { AdminDashboard } from './AdminDashboard';
 import { Money } from '../../components/common/Money';
 import { Turnstile, useTurnstileToken } from '../../components/common/Turnstile';
@@ -33,7 +35,8 @@ type AdminTab =
   | 'promos'
   | 'categories'
   | 'blog'
-  | 'subscribers';
+  | 'subscribers'
+  | 'shipping';
 
 export const AdminPortal: React.FC = () => {
   const {
@@ -43,6 +46,7 @@ export const AdminPortal: React.FC = () => {
     categories,
     blogPosts,
     newsletterSubscribers,
+    shopSettings,
     isAdminLoggedIn,
     adminLogin,
     completeAdminSession,
@@ -94,6 +98,12 @@ export const AdminPortal: React.FC = () => {
       icon: <Mail className="w-3.5 h-3.5" />,
     },
     { id: 'promos', label: 'Promotions', count: promoCodes.length, icon: <Tag className="w-3.5 h-3.5" /> },
+    {
+      id: 'shipping',
+      label: 'Delivery & Tax',
+      count: shopSettings.deliveryZones.filter((z) => z.active).length,
+      icon: <Truck className="w-3.5 h-3.5" />,
+    },
   ];
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -358,6 +368,7 @@ export const AdminPortal: React.FC = () => {
             {activeTab === 'blog' && <BlogAdminPanel />}
             {activeTab === 'subscribers' && <NewsletterAdminPanel />}
             {activeTab === 'promos' && <PromoAdminPanel />}
+            {activeTab === 'shipping' && <ShippingTaxAdminPanel />}
           </main>
         </div>
       </div>

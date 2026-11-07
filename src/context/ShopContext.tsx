@@ -12,6 +12,8 @@ import {
   RoomCollection,
   BlogPost,
   NewsletterSubscriber,
+  ShopSettings,
+  DEFAULT_SHOP_SETTINGS,
 } from '../types';
 import {
   PRODUCTS as INITIAL_PRODUCTS,
@@ -42,6 +44,8 @@ import {
   deleteSupabaseBlogPost,
   fetchSupabaseNewsletterSubscribers,
   deleteSupabaseNewsletterSubscriber,
+  fetchSupabaseShopSettings,
+  upsertSupabaseShopSettings,
   ConnectionTestResult,
 } from '../lib/supabase';
 import { validateAdminCredentials } from '../lib/adminConfig';
@@ -63,11 +67,16 @@ interface ShopContextType {
   cart: CartItem[];
   cartCount: number;
   cartSubtotal: number;
+  /** Cart preview shipping — 0 when zones are selected at checkout. */
   shippingFee: number;
   freeShippingThreshold: number;
   promoDiscount: PromoDiscount | null;
   discountAmount: number;
   cartTotal: number;
+
+  // Delivery & tax (admin-managed)
+  shopSettings: ShopSettings;
+  updateShopSettings: (settings: ShopSettings) => void;
   addToCart: (productId: string, quantity?: number, selectedColor?: string) => void;
   removeFromCart: (productId: string, selectedColor?: string) => void;
   updateQuantity: (productId: string, quantity: number, selectedColor?: string) => void;
@@ -160,6 +169,7 @@ const PROMOS_STORAGE_KEY = 'misty_bliss_promos_v2';
 const CATEGORIES_STORAGE_KEY = 'misty_bliss_categories_v1';
 const ROOMS_STORAGE_KEY = 'misty_bliss_rooms_v1';
 const BLOG_STORAGE_KEY = 'misty_bliss_blog_posts_v1';
+const SETTINGS_STORAGE_KEY = 'misty_bliss_shop_settings_v1';
 const ADMIN_AUTH_KEY = 'misty_bliss_admin_auth_v2';
 
 const DEFAULT_CART: CartItem[] = [
@@ -388,6 +398,9 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Newsletter subscribers
   const [newsletterSubscribers, setNewsletterSubscribers] = useState<NewsletterSubscriber[]>([]);
 
+  // Delivery & tax settings
+  const [shopSettings, setShopSettings] = useState<ShopSettings>(DEFAULT_SHOP_SETTINGS);
+
   // Admin Auth state
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
 
@@ -459,6 +472,20 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (storedCategories) {
           const parsed = JSON.parse(storedCategories);
           if (Array.isArray(parsed) && parsed.length > 0) setCategories(parsed);
+        }
+
+        const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        if (storedSettings) {
+          const parsed = JSON.parse(storedSettings);
+          if (parsed && typeof parsed === 'object') {
+            setShopSettings({
+              ...DEFAULT_SHOP_SETTINGS,
+              ...parsed,
+              deliveryZones: Array.isArray(parsed.deliveryZones) && parsed.deliveryZones.length
+                ? parsed.deliveryZones
+                : DEFAULT_SHOP_SETTINGS.deliveryZones,
+            });
+          }
         }
 
         const storedAdmin = localStorage.getItem(ADMIN_AUTH_KEY);
@@ -537,6 +564,12 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const subs = await fetchSupabaseNewsletterSubscribers();
           if (subs) setNewsletterSubscribers(subs);
         }
+
+        // Delivery & tax settings
+        if (conn.tablesStatus?.shop_settings) {
+          const settings = await fetchSupabaseShopSettings();
+          if (settings) setShopSettings(settings);
+        }
       }
     } catch (err) {
       console.warn('Initial Supabase sync caught:', err);
@@ -590,6 +623,13 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem(BLOG_STORAGE_KEY, JSON.stringify(blogPosts));
     } catch {}
   }, [blogPosts, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    try {
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(shopSettings));
+    } catch {}
+  }, [shopSettings, isHydrated]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -1051,8 +1091,9 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, 0);
   }, [cart, products]);
 
+  // Legacy free-shipping meter kept for UI; zone fees are chosen at checkout.
   const freeShippingThreshold = 75;
-  const shippingFee = cartSubtotal >= freeShippingThreshold || cartSubtotal === 0 ? 0 : 8.5;
+  const shippingFee = 0;
 
   const discountAmount = useMemo(() => {
     if (!promoDiscount) return 0;
@@ -1060,8 +1101,32 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [cartSubtotal, promoDiscount]);
 
   const cartTotal = useMemo(() => {
-    return Math.max(0, cartSubtotal - discountAmount + shippingFee);
-  }, [cartSubtotal, discountAmount, shippingFee]);
+    return Math.max(0, cartSubtotal - discountAmount);
+  }, [cartSubtotal, discountAmount]);
+
+  const updateShopSettings = (settings: ShopSettings) => {
+    const next: ShopSettings = {
+      deliveryEnabled: Boolean(settings.deliveryEnabled),
+      deliveryZones: (settings.deliveryZones || [])
+        .map((z) => ({
+          id: z.id || `zone-${Date.now()}`,
+          name: (z.name || 'Zone').trim() || 'Zone',
+          fee: Math.max(0, Number(z.fee) || 0),
+          active: z.active !== false,
+        }))
+        .filter((z) => z.name),
+      taxEnabled: Boolean(settings.taxEnabled),
+      taxPercent: Math.max(0, Number(settings.taxPercent) || 0),
+    };
+    if (next.deliveryZones.length === 0) {
+      next.deliveryZones = DEFAULT_SHOP_SETTINGS.deliveryZones;
+    }
+    setShopSettings(next);
+    addToast('Settings Saved', 'Delivery and tax settings updated');
+    upsertSupabaseShopSettings(next).catch((err) => {
+      console.warn('Supabase shop settings save failed:', err);
+    });
+  };
 
   const applyPromoCode = (code: string) => {
     const normalized = code.trim().toUpperCase();
@@ -1122,6 +1187,8 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
         promoDiscount,
         discountAmount,
         cartTotal,
+        shopSettings,
+        updateShopSettings,
         addToCart,
         removeFromCart,
         updateQuantity,

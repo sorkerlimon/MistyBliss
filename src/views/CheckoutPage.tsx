@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from '../context/RouterContext';
 import { useShop } from '../context/ShopContext';
@@ -14,9 +14,9 @@ export const CheckoutPage: React.FC = () => {
   const {
     cart,
     cartSubtotal,
-    shippingFee,
     promoDiscount,
     discountAmount,
+    shopSettings,
     clearCart,
     getProductById,
     createOrder,
@@ -36,6 +36,7 @@ export const CheckoutPage: React.FC = () => {
   const shippingSpeed = 'standard' as const;
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'cod' | 'bkash'>('cod');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [selectedZoneId, setSelectedZoneId] = useState('');
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,14 +49,33 @@ export const CheckoutPage: React.FC = () => {
     controllerRef: turnstileControllerRef,
   } = useTurnstileToken();
 
-  // Calculations
-  const selectedShippingCost = shippingFee;
-  const estimatedTax = Math.round(cartSubtotal * 0.05 * 100) / 100;
+  const activeZones = useMemo(
+    () => shopSettings.deliveryZones.filter((z) => z.active),
+    [shopSettings.deliveryZones]
+  );
+
+  useEffect(() => {
+    if (!shopSettings.deliveryEnabled) {
+      setSelectedZoneId('');
+      return;
+    }
+    if (!selectedZoneId || !activeZones.some((z) => z.id === selectedZoneId)) {
+      setSelectedZoneId(activeZones[0]?.id || '');
+    }
+  }, [shopSettings.deliveryEnabled, activeZones, selectedZoneId]);
+
+  const selectedZone = activeZones.find((z) => z.id === selectedZoneId);
+  const selectedShippingCost =
+    shopSettings.deliveryEnabled && selectedZone ? selectedZone.fee : 0;
+  const estimatedTax = shopSettings.taxEnabled
+    ? Math.round(cartSubtotal * (shopSettings.taxPercent / 100) * 100) / 100
+    : 0;
   const finalTotal = Math.max(0, cartSubtotal - discountAmount + selectedShippingCost + estimatedTax);
   const isCheckoutReady =
     email.trim().includes('@') &&
     [firstName, lastName, address, city, state, postalCode, phone].every((value) => value.trim()) &&
-    acceptedTerms;
+    acceptedTerms &&
+    (!shopSettings.deliveryEnabled || Boolean(selectedZoneId));
 
   const validate = () => {
     const errors: Record<string, string> = {};
@@ -67,6 +87,9 @@ export const CheckoutPage: React.FC = () => {
     if (!state.trim()) errors.state = 'State is required';
     if (!postalCode.trim()) errors.postalCode = 'Postal code is required';
     if (!phone.trim()) errors.phone = 'Phone number is required';
+    if (shopSettings.deliveryEnabled && !selectedZoneId) {
+      errors.deliveryZone = 'Please select a delivery area';
+    }
     if (!acceptedTerms) errors.terms = 'Please agree to the terms before confirming your order';
 
     setFormErrors(errors);
@@ -123,6 +146,11 @@ export const CheckoutPage: React.FC = () => {
       total: finalTotal,
       paymentMethod,
       shippingSpeed,
+      notes: selectedZone
+        ? `Delivery zone: ${selectedZone.name}${shopSettings.taxEnabled ? ` · Tax ${shopSettings.taxPercent}%` : ''}`
+        : shopSettings.taxEnabled
+          ? `Tax ${shopSettings.taxPercent}%`
+          : undefined,
     });
 
     const confirmedOrder = {
@@ -138,6 +166,9 @@ export const CheckoutPage: React.FC = () => {
       total: finalTotal,
       paymentMethod,
       shippingSpeed,
+      deliveryZone: selectedZone?.name,
+      shippingFee: selectedShippingCost,
+      tax: estimatedTax,
     };
 
     setOrderConfirmed(confirmedOrder);
@@ -433,6 +464,50 @@ export const CheckoutPage: React.FC = () => {
             </div>
           </div>
 
+          {shopSettings.deliveryEnabled && (
+            <div className="bg-white p-5 sm:p-6 rounded-xl border border-[#E9E3DE] space-y-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-[#292522] flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-[#292522] text-white text-[10px] flex items-center justify-center font-bold">3</span>
+                Delivery Area
+              </h2>
+              <div className="space-y-2">
+                {activeZones.length === 0 ? (
+                  <p className="text-xs text-[#A84940]">No delivery zones are active. Please contact support.</p>
+                ) : (
+                  activeZones.map((zone) => (
+                    <label
+                      key={zone.id}
+                      className={`flex items-center justify-between gap-3 p-3 rounded-md border cursor-pointer ${
+                        selectedZoneId === zone.id ? 'border-[#292522] bg-[#FAF8F5]' : 'border-[#E9E3DE]'
+                      }`}
+                    >
+                      <span className="flex items-center gap-3 text-xs">
+                        <input
+                          type="radio"
+                          name="delivery-zone"
+                          checked={selectedZoneId === zone.id}
+                          onChange={() => setSelectedZoneId(zone.id)}
+                          className="accent-[#292522]"
+                        />
+                        <span className="font-semibold text-[#292522]">{zone.name}</span>
+                      </span>
+                      <span className="text-xs font-semibold text-[#292522] tabular-nums">
+                        {zone.fee === 0 ? (
+                          <span className="text-[#89947D]">FREE</span>
+                        ) : (
+                          <Money amount={zone.fee} />
+                        )}
+                      </span>
+                    </label>
+                  ))
+                )}
+                {formErrors.deliveryZone && (
+                  <p className="text-[10px] text-[#A84940]">{formErrors.deliveryZone}</p>
+                )}
+              </div>
+            </div>
+          )}
+
         </div>
 
         {/* Right: Order Summary Sidebar (5 cols) */}
@@ -481,17 +556,27 @@ export const CheckoutPage: React.FC = () => {
               </div>
             )}
 
-            <div className="flex justify-between">
-              <span>Delivery</span>
-              <span className="font-semibold text-[#292522] tabular-nums">
-                {selectedShippingCost === 0 ? <span className="text-[#89947D]">FREE</span> : <Money amount={selectedShippingCost} />}
-              </span>
-            </div>
+            {shopSettings.deliveryEnabled && (
+              <div className="flex justify-between">
+                <span>Delivery{selectedZone ? ` (${selectedZone.name})` : ''}</span>
+                <span className="font-semibold text-[#292522] tabular-nums">
+                  {selectedShippingCost === 0 ? (
+                    <span className="text-[#89947D]">FREE</span>
+                  ) : (
+                    <Money amount={selectedShippingCost} />
+                  )}
+                </span>
+              </div>
+            )}
 
-            <div className="flex justify-between">
-              <span>Estimated Sales Tax (5%)</span>
-              <span className="font-semibold text-[#292522] tabular-nums"><Money amount={estimatedTax} /></span>
-            </div>
+            {shopSettings.taxEnabled && (
+              <div className="flex justify-between">
+                <span>Sales Tax ({shopSettings.taxPercent}%)</span>
+                <span className="font-semibold text-[#292522] tabular-nums">
+                  <Money amount={estimatedTax} />
+                </span>
+              </div>
+            )}
 
             <div className="flex justify-between text-base font-bold text-[#292522] pt-3 border-t border-[#E9E3DE]">
               <span>Grand Total</span>

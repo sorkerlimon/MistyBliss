@@ -15,11 +15,10 @@ export const CartPage: React.FC = () => {
     cart,
     cartCount,
     cartSubtotal,
-    shippingFee,
-    freeShippingThreshold,
     promoDiscount,
     discountAmount,
     cartTotal,
+    shopSettings,
     updateQuantity,
     removeFromCart,
     applyPromoCode,
@@ -37,8 +36,12 @@ export const CartPage: React.FC = () => {
     controllerRef: turnstileControllerRef,
   } = useTurnstileToken();
 
-  const amountNeededForFreeShipping = Math.max(0, freeShippingThreshold - cartSubtotal);
-  const freeShippingProgress = Math.min(100, (cartSubtotal / freeShippingThreshold) * 100);
+  const activeZones = shopSettings.deliveryZones.filter((z) => z.active);
+  const deliveryHint = shopSettings.deliveryEnabled
+    ? activeZones.length
+      ? `Delivery from ৳${Math.min(...activeZones.map((z) => z.fee)).toLocaleString('en-BD')} — select zone at checkout`
+      : 'Delivery calculated at checkout'
+    : null;
 
   const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,30 +128,14 @@ export const CartPage: React.FC = () => {
         {/* Items List */}
         <div className="lg:col-span-8 space-y-4">
           
-          {/* Free Shipping Meter */}
-          <div className="bg-white p-4 rounded-xl border border-[#E9E3DE] space-y-2">
-            <div className="flex justify-between items-center text-xs">
-              {amountNeededForFreeShipping > 0 ? (
-                <p className="text-[#292522]">
-                  Add <span className="font-semibold text-[#C77F79]"><Money amount={amountNeededForFreeShipping} className="font-semibold text-[#C77F79]" /></span> more to qualify for <span className="font-semibold">Free Delivery</span>
-                </p>
-              ) : (
-                <p className="text-[#89947D] font-semibold flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Your order qualifies for Free Standard Shipping!
-                </p>
-              )}
-              <span className="text-[11px] text-[#77716C] font-mono tabular-nums">
-                <><Money amount={cartSubtotal} /> / <Money amount={freeShippingThreshold} /></>
-              </span>
+          {deliveryHint && (
+            <div className="bg-white p-4 rounded-xl border border-[#E9E3DE]">
+              <p className="text-xs text-[#292522] flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-[#C77F79] shrink-0" />
+                {deliveryHint}
+              </p>
             </div>
-            <div className="w-full bg-[#FAF8F5] h-2 rounded-full overflow-hidden border border-[#E9E3DE]">
-              <div
-                className="bg-[#C77F79] h-full transition-all duration-300"
-                style={{ width: `${freeShippingProgress}%` }}
-              />
-            </div>
-          </div>
+          )}
 
           {/* Cart Table */}
           <div className="bg-white rounded-xl border border-[#E9E3DE] divide-y divide-[#E9E3DE] overflow-hidden">
@@ -300,17 +287,19 @@ export const CartPage: React.FC = () => {
               </div>
             )}
 
-            <div className="flex justify-between">
-              <span>Estimated Shipping</span>
-              <span className="font-semibold text-[#292522] tabular-nums">
-                {shippingFee === 0 ? <span className="text-[#89947D]">FREE</span> : <Money amount={shippingFee} />}
-              </span>
-            </div>
+            {shopSettings.deliveryEnabled && (
+              <div className="flex justify-between">
+                <span>Delivery</span>
+                <span className="text-[#77716C] italic">Select at checkout</span>
+              </div>
+            )}
 
-            <div className="flex justify-between">
-              <span>Estimated Sales Tax</span>
-              <span className="text-[#77716C] italic">Calculated at checkout</span>
-            </div>
+            {shopSettings.taxEnabled && (
+              <div className="flex justify-between">
+                <span>Sales Tax ({shopSettings.taxPercent}%)</span>
+                <span className="text-[#77716C] italic">Calculated at checkout</span>
+              </div>
+            )}
 
             <div className="flex justify-between text-base font-bold text-[#292522] pt-3 border-t border-[#E9E3DE]">
               <span>Estimated Total</span>
