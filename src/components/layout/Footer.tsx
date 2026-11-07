@@ -11,14 +11,10 @@ import {
   Send,
   Check,
   Globe,
-  ArrowUpRight,
-  ShieldCheck,
   Truck,
-  RotateCcw,
   Sparkles,
-  Phone,
 } from 'lucide-react';
-import { SITE_ADDRESS, SITE_PHONE } from '../../lib/site';
+import { SITE_ADDRESS } from '../../lib/site';
 import { recordNewsletterSubscriber } from '../../lib/supabase';
 import { Turnstile, useTurnstileToken } from '../common/Turnstile';
 const NEWSLETTER_RATE_KEY = 'misty_bliss_newsletter_last_submit';
@@ -208,7 +204,7 @@ export const Footer: React.FC = () => {
       {/* Top Banner: Modern Value Propositions (2x2 grid on mobile, 4 cols on desktop) */}
       <div className="border-b border-[#38332E]/80 bg-[#1D1A18]/60 backdrop-blur-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 text-xs">
+          <div className="grid grid-cols-2 gap-4 sm:gap-6 text-xs">
             
             <div className="flex items-start gap-2.5 sm:gap-3.5">
               <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#2F2B27] flex items-center justify-center text-[#C77F79] shrink-0 border border-[#443E38]">
@@ -218,30 +214,6 @@ export const Footer: React.FC = () => {
                 <h4 className="font-semibold text-white tracking-tight text-[11px] sm:text-xs">Free Express Shipping</h4>
                 <p className="text-[#A89F97] mt-0.5 text-[10px] sm:text-[11px] leading-relaxed">
                   On orders over ৳75.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2.5 sm:gap-3.5">
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#2F2B27] flex items-center justify-center text-[#C77F79] shrink-0 border border-[#443E38]">
-                <RotateCcw className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-white tracking-tight text-[11px] sm:text-xs">30-Day Returns</h4>
-                <p className="text-[#A89F97] mt-0.5 text-[10px] sm:text-[11px] leading-relaxed">
-                  Pre-paid printable return labels.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2.5 sm:gap-3.5">
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#2F2B27] flex items-center justify-center text-[#89947D] shrink-0 border border-[#443E38]">
-                <ShieldCheck className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-white tracking-tight text-[11px] sm:text-xs">Natural Materials</h4>
-                <p className="text-[#A89F97] mt-0.5 text-[10px] sm:text-[11px] leading-relaxed">
-                  Travertine, ceramics & linen.
                 </p>
               </div>
             </div>
@@ -307,14 +279,6 @@ export const Footer: React.FC = () => {
             <div className="pt-3 text-[11px] text-[#7E756D] border-t border-[#38332E]/80">
               <p>Studio Showroom & Workshop</p>
               <p className="text-[#A89F97]">{SITE_ADDRESS}</p>
-              <a
-                href={`https://wa.me/${SITE_PHONE.replace(/\D/g, '')}`}
-                className="mt-1 flex items-center gap-1.5 text-[#A89F97] hover:text-white transition-colors"
-                aria-label={`Chat with Misty Bliss on WhatsApp at ${SITE_PHONE}`}
-              >
-                <Phone className="w-3 h-3" />
-                <span>WhatsApp: {SITE_PHONE}</span>
-              </a>
             </div>
           </div>
 
@@ -348,26 +312,6 @@ export const Footer: React.FC = () => {
                     Special Offers & Sale
                   </Link>
                 </li>
-                <li>
-                  <Link href="/categories/vases-ceramics" className="hover:text-white transition-colors block py-0.5">
-                    Vases & Ceramics
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/categories/artificial-flowers" className="hover:text-white transition-colors block py-0.5">
-                    Botanical Florals
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/categories/lighting" className="hover:text-white transition-colors block py-0.5">
-                    Ambient Lighting
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/categories/gifts" className="hover:text-white transition-colors block py-0.5">
-                    Curated Gift Sets
-                  </Link>
-                </li>
               </ul>
             </div>
 
@@ -387,23 +331,6 @@ export const Footer: React.FC = () => {
                     </Link>
                   </li>
                 ))}
-                <li className="pt-1.5 border-t border-[#38332E]/60">
-                  <Link
-                    href="/about"
-                    className="hover:text-white transition-colors flex items-center gap-1 text-[#A89F97] py-0.5"
-                  >
-                    <span>Our Sourcing Story</span>
-                    <ArrowUpRight className="w-3 h-3" />
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/about"
-                    className="hover:text-white transition-colors text-[#A89F97] block py-0.5"
-                  >
-                    Sustainability Promise
-                  </Link>
-                </li>
               </ul>
             </div>
 
@@ -420,19 +347,10 @@ export const Footer: React.FC = () => {
                   Shipping Policy
                 </Link>
                 <Link href="/shipping-returns" className="hover:text-white transition-colors text-left py-0.5">
-                  30-Day Returns
-                </Link>
-                <Link href="/shipping-returns" className="hover:text-white transition-colors text-left py-0.5">
                   Order Tracking
                 </Link>
                 <Link href="/contact" className="hover:text-white transition-colors text-left py-0.5">
                   Contact Support
-                </Link>
-                <Link href="/shipping-returns" className="hover:text-white transition-colors text-left py-0.5">
-                  Care Guidelines
-                </Link>
-                <Link href="/about" className="hover:text-white transition-colors text-left py-0.5">
-                  Showroom Visits
                 </Link>
               </div>
             </div>
@@ -534,7 +452,7 @@ export const Footer: React.FC = () => {
               onChange={(e) => setCurrency(e.target.value)}
               className="bg-[#2C2723] border border-[#443E38] text-white px-2.5 py-1 rounded text-[11px] focus:outline-none focus:border-[#C77F79]"
             >
-              <option value="BDT">Bangladesh (BDT ৳)</option>
+              <option value="BDT">Bangladesh (BDT)</option>
             </select>
           </div>
 
