@@ -565,10 +565,36 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (subs) setNewsletterSubscribers(subs);
         }
 
-        // Delivery & tax settings
+        // Delivery & tax settings — prefer localStorage (admin just saved) over stale remote seed
         if (conn.tablesStatus?.shop_settings) {
-          const settings = await fetchSupabaseShopSettings();
-          if (settings) setShopSettings(settings);
+          let localSettings: ShopSettings | null = null;
+          try {
+            const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (parsed && typeof parsed === 'object') {
+                localSettings = {
+                  ...DEFAULT_SHOP_SETTINGS,
+                  ...parsed,
+                  deliveryZones:
+                    Array.isArray(parsed.deliveryZones) && parsed.deliveryZones.length
+                      ? parsed.deliveryZones
+                      : DEFAULT_SHOP_SETTINGS.deliveryZones,
+                };
+              }
+            }
+          } catch {
+            localSettings = null;
+          }
+
+          const remoteSettings = await fetchSupabaseShopSettings();
+          if (localSettings) {
+            setShopSettings(localSettings);
+            // Keep Supabase in sync with what admin saved locally
+            upsertSupabaseShopSettings(localSettings).catch(() => {});
+          } else if (remoteSettings) {
+            setShopSettings(remoteSettings);
+          }
         }
       }
     } catch (err) {
@@ -1122,7 +1148,17 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
       next.deliveryZones = DEFAULT_SHOP_SETTINGS.deliveryZones;
     }
     setShopSettings(next);
-    addToast('Settings Saved', 'Delivery and tax settings updated');
+    try {
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      /* ignore */
+    }
+    addToast(
+      'Settings Saved',
+      next.taxEnabled
+        ? `Tax ${next.taxPercent}% on · delivery ${next.deliveryEnabled ? 'on' : 'off'}`
+        : `Tax off · delivery ${next.deliveryEnabled ? 'on' : 'off'}`
+    );
     upsertSupabaseShopSettings(next).catch((err) => {
       console.warn('Supabase shop settings save failed:', err);
     });

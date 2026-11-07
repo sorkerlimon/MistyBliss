@@ -627,7 +627,7 @@ export const CheckoutPage: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting || !isCheckoutReady}
-            className="w-full py-3.5 px-6 bg-[#292522] hover:bg-[#3D3834] text-white text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer"
+            className="w-full py-3.5 px-6 bg-[#C77F79] hover:bg-[#b56e68] text-white text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-2 shadow-sm disabled:bg-[#D4CBC4] disabled:text-white/80 disabled:cursor-not-allowed cursor-pointer"
           >
             {isSubmitting ? (
               <span>Placing Order...</span>

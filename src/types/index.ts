@@ -175,7 +175,7 @@ export const DEFAULT_SHOP_SETTINGS: ShopSettings = {
     { id: 'zone-dhaka-city', name: 'Dhaka City', fee: 85, active: true },
     { id: 'zone-outside-dhaka', name: 'Outside Dhaka', fee: 180, active: true },
   ],
-  taxEnabled: false,
+  taxEnabled: true,
   taxPercent: 5,
 };
 
