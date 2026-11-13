@@ -369,7 +369,7 @@ export const Footer: React.FC = () => {
               {isSubscribed ? (
                 <div className="bg-[#89947D]/15 border border-[#89947D]/40 text-[#A6B299] p-2.5 rounded-lg flex items-center gap-2 text-xs">
                   <Check className="w-4 h-4 text-[#89947D] shrink-0" />
-                  <span>Welcome! Check your inbox for code WELCOME10.</span>
+                  <span>Welcome! Check your inbox for your welcome offer.</span>
                 </div>
               ) : !newsletterReady ? (
                 <div className="flex gap-2 h-[34px]" aria-hidden />

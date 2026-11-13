@@ -343,14 +343,13 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Promo codes — database only (no hardcoded seed)
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
 
-  // Categories state
-  // Categories & journal — database only (empty if DB empty)
+  // Categories — Supabase only (empty when DB has none)
   const [categories, setCategories] = useState<Category[]>([]);
 
   // Rooms state
   const [rooms, setRooms] = useState<RoomCollection[]>(INITIAL_ROOMS);
 
-  // Blog / journal posts — database only
+  // Journal / blog — Supabase only (empty when DB has none)
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
 
   // Newsletter subscribers

@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
           success: true,
           clientPersist: true,
-          message: 'Welcome to the Misty Bliss Design Circle. Check your inbox for code WELCOME10.',
+          message: 'Welcome to the Misty Bliss Design Circle. Check your inbox for your welcome offer.',
         });
       }
 
@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Welcome to the Misty Bliss Design Circle. Check your inbox for code WELCOME10.',
+      message: 'Welcome to the Misty Bliss Design Circle. Check your inbox for your welcome offer.',
     });
   } catch (err) {
     console.error('Newsletter API error:', err);
