@@ -15,11 +15,7 @@ import {
   ShopSettings,
   DEFAULT_SHOP_SETTINGS,
 } from '../types';
-import {
-  CATEGORIES as INITIAL_CATEGORIES,
-  ROOMS as INITIAL_ROOMS,
-} from '../data/mockData';
-import { BLOG_POSTS as INITIAL_BLOG_POSTS } from '../data/mockBlogData';
+import { ROOMS as INITIAL_ROOMS } from '../data/mockData';
 import {
   SUPABASE_URL,
   isSupabaseConfigured,
@@ -33,11 +29,12 @@ import {
   deleteSupabaseOrder,
   fetchSupabasePromoCodes,
   upsertSupabasePromoCode,
+  deleteSupabasePromoCode,
   fetchSupabaseCategories,
   upsertSupabaseCategory,
   deleteSupabaseCategory,
   ensureSupabaseRoomsCatalog,
-  ensureSupabaseBlogCatalog,
+  fetchSupabaseBlogPosts,
   upsertSupabaseBlogPost,
   deleteSupabaseBlogPost,
   fetchSupabaseNewsletterSubscribers,
@@ -164,10 +161,10 @@ const CART_STORAGE_KEY = 'misty_bliss_cart_v2';
 const WISHLIST_STORAGE_KEY = 'misty_bliss_wishlist_v2';
 const PRODUCTS_STORAGE_KEY = 'misty_bliss_products_v4_db';
 const ORDERS_STORAGE_KEY = 'misty_bliss_orders_v2';
-const PROMOS_STORAGE_KEY = 'misty_bliss_promos_v2';
-const CATEGORIES_STORAGE_KEY = 'misty_bliss_categories_v1';
+const PROMOS_STORAGE_KEY = 'misty_bliss_promos_v3';
+const CATEGORIES_STORAGE_KEY = 'misty_bliss_categories_v2';
 const ROOMS_STORAGE_KEY = 'misty_bliss_rooms_v1';
-const BLOG_STORAGE_KEY = 'misty_bliss_blog_posts_v1';
+const BLOG_STORAGE_KEY = 'misty_bliss_blog_posts_v2';
 const SETTINGS_STORAGE_KEY = 'misty_bliss_shop_settings_v2';
 const ADMIN_AUTH_KEY = 'misty_bliss_admin_auth_v2';
 
@@ -181,51 +178,6 @@ const SAMPLE_CART: CartItem[] = [
 ];
 
 const DEFAULT_WISHLIST: string[] = [];
-
-const INITIAL_PROMOS: PromoCode[] = [
-  {
-    id: 'promo-1',
-    code: 'BLISS15',
-    discountPercent: 15,
-    minSpend: 50,
-    status: 'active',
-    usageCount: 42,
-    expiryDate: '2026-12-31',
-  },
-  {
-    id: 'promo-2',
-    code: 'WELCOME10',
-    discountPercent: 10,
-    status: 'active',
-    usageCount: 89,
-    expiryDate: '2026-12-31',
-  },
-  {
-    id: 'promo-3',
-    code: 'SPRING25',
-    discountPercent: 25,
-    minSpend: 100,
-    status: 'active',
-    usageCount: 19,
-    expiryDate: '2026-06-30',
-  },
-  {
-    id: 'promo-4',
-    code: 'VIPCLUB20',
-    discountPercent: 20,
-    status: 'active',
-    usageCount: 8,
-    expiryDate: '2026-11-15',
-  },
-  {
-    id: 'promo-5',
-    code: 'ARCHIVE30',
-    discountPercent: 30,
-    status: 'inactive',
-    usageCount: 54,
-    expiryDate: '2026-03-31',
-  },
-];
 
 const INITIAL_ORDERS: Order[] = [
   {
@@ -388,16 +340,18 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
 
   // Promo Codes state
-  const [promoCodes, setPromoCodes] = useState<PromoCode[]>(INITIAL_PROMOS);
+  // Promo codes — database only (no hardcoded seed)
+  const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
 
   // Categories state
-  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
+  // Categories & journal — database only (empty if DB empty)
+  const [categories, setCategories] = useState<Category[]>([]);
 
   // Rooms state
   const [rooms, setRooms] = useState<RoomCollection[]>(INITIAL_ROOMS);
 
-  // Blog / journal posts
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(INITIAL_BLOG_POSTS);
+  // Blog / journal posts — database only
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
 
   // Newsletter subscribers
   const [newsletterSubscribers, setNewsletterSubscribers] = useState<NewsletterSubscriber[]>([]);
@@ -545,19 +499,29 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        // Fetch promo codes if table exists in Supabase
+        // Promo codes: database only — never keep hardcoded seeds
         if (conn.tablesStatus?.promo_codes) {
           const dbPromos = await fetchSupabasePromoCodes();
-          if (dbPromos && dbPromos.length > 0) {
+          if (dbPromos) {
             setPromoCodes(dbPromos);
+            try {
+              localStorage.setItem(PROMOS_STORAGE_KEY, JSON.stringify(dbPromos));
+            } catch {
+              /* ignore */
+            }
           }
         }
 
-        // Fetch categories if table exists in Supabase
+        // Categories: database only — empty list if DB empty
         if (conn.tablesStatus?.categories) {
           const dbCategories = await fetchSupabaseCategories();
-          if (dbCategories && dbCategories.length > 0) {
+          if (dbCategories) {
             setCategories(dbCategories);
+            try {
+              localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(dbCategories));
+            } catch {
+              /* ignore */
+            }
           }
         }
 
@@ -569,11 +533,16 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        // Journal blog posts
+        // Journal blog posts: database only — never seed from mock
         if (conn.tablesStatus?.blog_posts) {
-          const dbPosts = await ensureSupabaseBlogCatalog(INITIAL_BLOG_POSTS);
-          if (dbPosts && dbPosts.length > 0) {
+          const dbPosts = await fetchSupabaseBlogPosts();
+          if (dbPosts) {
             setBlogPosts(dbPosts);
+            try {
+              localStorage.setItem(BLOG_STORAGE_KEY, JSON.stringify(dbPosts));
+            } catch {
+              /* ignore */
+            }
           }
         }
 
@@ -634,6 +603,7 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (!isHydrated) return;
     try {
+      // Cache whatever came from DB / admin (including empty after wipe)
       localStorage.setItem(PROMOS_STORAGE_KEY, JSON.stringify(promoCodes));
     } catch {}
   }, [promoCodes, isHydrated]);
@@ -798,14 +768,25 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const togglePromoStatus = (promoId: string) => {
-    setPromoCodes((prev) =>
-      prev.map((p) => (p.id === promoId ? { ...p, status: p.status === 'active' ? 'inactive' : 'active' } : p))
-    );
+    setPromoCodes((prev) => {
+      const next = prev.map((p) =>
+        p.id === promoId ? { ...p, status: (p.status === 'active' ? 'inactive' : 'active') as PromoCode['status'] } : p
+      );
+      const updated = next.find((p) => p.id === promoId);
+      if (updated) {
+        upsertSupabasePromoCode(updated).catch((err) => {
+          console.warn('Supabase promo toggle failed:', err);
+        });
+      }
+      return next;
+    });
   };
 
   const deletePromoCode = (promoId: string) => {
     setPromoCodes((prev) => prev.filter((p) => p.id !== promoId));
-    addToast('Promo Code Deleted', 'Code has been removed', 'info');
+    deleteSupabasePromoCode(promoId).catch((err) => {
+      console.warn('Supabase promo delete failed:', err);
+    });
   };
 
   // Category CRUD
@@ -1190,40 +1171,28 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const applyPromoCode = (code: string) => {
     const normalized = code.trim().toUpperCase();
 
-    // Check dynamic promo codes
     const match = promoCodes.find((p) => p.code.toUpperCase() === normalized);
-    if (match) {
-      if (match.status !== 'active') {
-        return { success: false, message: `Promo code "${normalized}" is currently expired or inactive.` };
-      }
-      if (match.minSpend && cartSubtotal < match.minSpend) {
-        return {
-          success: false,
-          message: `Code "${normalized}" requires a minimum subtotal of ৳${Number(match.minSpend).toFixed(2)}.`,
-        };
-      }
-      setPromoDiscount({ code: normalized, percent: match.discountPercent });
-      // Increment usage count
-      setPromoCodes((prev) =>
-        prev.map((p) => (p.id === match.id ? { ...p, usageCount: p.usageCount + 1 } : p))
-      );
-      addToast('Promo Code Applied', `${match.discountPercent}% savings applied to your order`, 'success');
-      return { success: true, message: `${match.discountPercent}% discount applied!` };
+    if (!match) {
+      return { success: false, message: 'Invalid code. Check with Misty Bliss for a current promo.' };
+    }
+    if (match.status !== 'active') {
+      return { success: false, message: `Promo code "${normalized}" is currently expired or inactive.` };
+    }
+    if (match.minSpend && cartSubtotal < match.minSpend) {
+      return {
+        success: false,
+        message: `Code "${normalized}" requires a minimum subtotal of ৳${Number(match.minSpend).toFixed(2)}.`,
+      };
     }
 
-    // Fallbacks
-    if (normalized === 'BLISS15') {
-      setPromoDiscount({ code: 'BLISS15', percent: 15 });
-      addToast('Promo Code Applied', '15% savings applied to your order', 'success');
-      return { success: true, message: '15% discount applied!' };
-    }
-    if (normalized === 'WELCOME10') {
-      setPromoDiscount({ code: 'WELCOME10', percent: 10 });
-      addToast('Promo Code Applied', '10% savings applied to your order', 'success');
-      return { success: true, message: '10% discount applied!' };
-    }
-
-    return { success: false, message: 'Invalid code. Try "BLISS15" or check with admin.' };
+    const updated: PromoCode = { ...match, usageCount: match.usageCount + 1 };
+    setPromoDiscount({ code: normalized, percent: match.discountPercent });
+    setPromoCodes((prev) => prev.map((p) => (p.id === match.id ? updated : p)));
+    upsertSupabasePromoCode(updated).catch((err) => {
+      console.warn('Supabase promo usage update failed:', err);
+    });
+    addToast('Promo Code Applied', `${match.discountPercent}% savings applied to your order`, 'success');
+    return { success: true, message: `${match.discountPercent}% discount applied!` };
   };
 
   const removePromoCode = () => {

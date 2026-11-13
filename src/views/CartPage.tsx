@@ -252,7 +252,7 @@ export const CartPage: React.FC = () => {
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Coupon code (e.g. BLISS15)"
+                    placeholder="Coupon code"
                     value={promoInput}
                     onChange={(e) => setPromoInput(e.target.value)}
                     className="flex-1 px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E9E3DE] rounded-md focus:outline-none focus:ring-1 focus:ring-[#C77F79]"

@@ -242,7 +242,7 @@ export const CartDrawer: React.FC = () => {
                     <div className="flex gap-2">
                       <input
                         type="text"
-                        placeholder="Promo code (try BLISS15)"
+                        placeholder="Promo code"
                         value={promoInput}
                         onChange={(e) => setPromoInput(e.target.value)}
                         className="flex-1 px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E9E3DE] rounded focus:outline-none focus:ring-1 focus:ring-[#C77F79]"

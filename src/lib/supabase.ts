@@ -716,6 +716,15 @@ export async function upsertSupabasePromoCode(promo: PromoCode): Promise<boolean
   }
 }
 
+export async function deleteSupabasePromoCode(promoId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('promo_codes').delete().eq('id', promoId);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Record newsletter subscriber in Supabase
  */
