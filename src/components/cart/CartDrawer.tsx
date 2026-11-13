@@ -31,16 +31,19 @@ export const CartDrawer: React.FC = () => {
   const [promoInput, setPromoInput] = useState('');
   const [promoError, setPromoError] = useState('');
   const {
+    token: turnstileToken,
     setToken: setTurnstileToken,
     widgetKey,
     reset: resetTurnstile,
     obtainToken,
     controllerRef: turnstileControllerRef,
   } = useTurnstileToken();
+  const turnstileConfigured = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+  const checkoutUnlocked = !turnstileConfigured || Boolean(turnstileToken);
 
   if (!isCartDrawerOpen) return null;
 
-  const activeZones = shopSettings.deliveryZones.filter((z) => z.active);
+  const activeZones = shopSettings.deliveryZones.filter((z) => z.active !== false);
   const deliveryHint = shopSettings.deliveryEnabled
     ? activeZones.length
       ? `Delivery from ৳${Math.min(...activeZones.map((z) => z.fee)).toLocaleString('en-BD')} — select at checkout`
@@ -72,16 +75,6 @@ export const CartDrawer: React.FC = () => {
       setPromoInput('');
       resetTurnstile();
     }
-  };
-
-  const handleCheckout = () => {
-    closeCartDrawer();
-    navigate('/checkout');
-  };
-
-  const handleViewCart = () => {
-    closeCartDrawer();
-    navigate('/cart');
   };
 
   return (
@@ -256,16 +249,12 @@ export const CartDrawer: React.FC = () => {
                       />
                       <button
                         type="submit"
-                        className="px-3 py-1.5 text-xs font-medium bg-[#292522] text-white rounded hover:bg-[#3D3834] transition-colors"
+                        disabled={turnstileConfigured && !turnstileToken}
+                        className="px-3 py-1.5 text-xs font-medium bg-[#292522] text-white rounded hover:bg-[#3D3834] transition-colors disabled:bg-[#D4CBC4] disabled:cursor-not-allowed"
                       >
                         Apply
                       </button>
                     </div>
-                    <Turnstile
-                      key={widgetKey}
-                      onTokenChange={setTurnstileToken}
-                      controllerRef={turnstileControllerRef}
-                    />
                   </form>
                 )}
                 {promoError && (
@@ -306,16 +295,43 @@ export const CartDrawer: React.FC = () => {
                 </div>
               </div>
 
+              {turnstileConfigured && (
+                <div className="pt-1">
+                  <Turnstile
+                    key={widgetKey}
+                    onTokenChange={setTurnstileToken}
+                    controllerRef={turnstileControllerRef}
+                  />
+                  {!turnstileToken && (
+                    <p className="text-[10px] text-[#77716C] mt-1">
+                      Complete the security check to continue to checkout.
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* CTA Buttons */}
               <div className="space-y-2 pt-1">
-                <Link
-                  href="/checkout"
-                  onClick={closeCartDrawer}
-                  className="w-full py-3 px-4 bg-[#292522] hover:bg-[#3D3834] active:bg-[#1f1c1a] text-white text-xs font-semibold rounded-md flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer touch-manipulation select-none"
-                >
-                  <span>Proceed to Checkout</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                {checkoutUnlocked ? (
+                  <Link
+                    href="/checkout"
+                    onClick={closeCartDrawer}
+                    className="w-full py-3 px-4 bg-[#292522] hover:bg-[#3D3834] active:bg-[#1f1c1a] text-white text-xs font-semibold rounded-md flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer touch-manipulation select-none"
+                  >
+                    <span>Proceed to Checkout</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full py-3 px-4 bg-[#D4CBC4] text-white/90 text-xs font-semibold rounded-md flex items-center justify-center gap-2 cursor-not-allowed"
+                    title="Complete the security check first"
+                  >
+                    <span>Proceed to Checkout</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <Link
                   href="/cart"
                   onClick={closeCartDrawer}

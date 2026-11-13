@@ -194,6 +194,23 @@ export async function fetchSupabaseProducts(): Promise<Product[] | null> {
   }
 }
 
+/** Fetch one product by slug (for metadata / SSR). */
+export async function fetchSupabaseProductBySlug(slug: string): Promise<Product | null> {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return mapProductRow(data);
+  } catch (err) {
+    console.warn('Supabase product by slug fetch skipped:', err);
+    return null;
+  }
+}
+
 /**
  * Upsert a full product list into Supabase (catalog seed / sync).
  */
@@ -805,16 +822,26 @@ export async function upsertSupabaseShopSettings(settings: ShopSettings): Promis
   try {
     const payload = {
       id: 'default',
-      delivery_enabled: settings.deliveryEnabled,
-      delivery_zones: settings.deliveryZones,
-      tax_enabled: settings.taxEnabled,
-      tax_percent: settings.taxPercent,
+      delivery_enabled: settings.deliveryEnabled !== false,
+      delivery_zones: settings.deliveryZones.map((z) => ({
+        id: z.id,
+        name: z.name,
+        fee: Number(z.fee) || 0,
+        active: true,
+      })),
+      tax_enabled: settings.taxEnabled !== false,
+      tax_percent: Number(settings.taxPercent) || 0,
       updated_at: new Date().toISOString(),
     };
 
     const { error } = await supabase.from('shop_settings').upsert(payload, { onConflict: 'id' });
-    return !error;
-  } catch {
+    if (error) {
+      console.warn('shop_settings upsert failed:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('shop_settings upsert exception:', err);
     return false;
   }
 }

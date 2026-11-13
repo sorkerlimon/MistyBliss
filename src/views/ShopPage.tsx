@@ -17,7 +17,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
   initialCollection,
 }) => {
   const { route, navigate } = useRouter();
-  const { products, categories } = useShop();
+  const { products, productsLoading, categories } = useShop();
 
   // Parse filters from route query or props
   const [selectedCategory, setSelectedCategory] = useState<string>(
@@ -157,9 +157,9 @@ export const ShopPage: React.FC<ShopPageProps> = ({
     selectedMaterial !== 'all',
   ].filter(Boolean).length;
 
-  // Progressive on-scroll loading
-  const INITIAL_BATCH_SIZE = 9;
-  const BATCH_INCREMENT = 6;
+  // Progressive loading: first 10, then +10
+  const INITIAL_BATCH_SIZE = 10;
+  const BATCH_INCREMENT = 10;
   const [visibleCount, setVisibleCount] = useState(INITIAL_BATCH_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const scrollSentinelRef = useRef<HTMLDivElement | null>(null);
@@ -262,7 +262,19 @@ export const ShopPage: React.FC<ShopPageProps> = ({
             {getCategoryTitle()}
           </h1>
           <p className="text-xs text-[#77716C] mt-1">
-            Showing <span className="font-semibold text-[#292522]">{Math.min(visibleCount, filteredProducts.length)}</span> of <span className="font-semibold text-[#292522]">{filteredProducts.length}</span> thoughtfully designed pieces
+            {productsLoading && products.length === 0 ? (
+              'Loading catalog…'
+            ) : (
+              <>
+                Showing{' '}
+                <span className="font-semibold text-[#292522]">
+                  {Math.min(visibleCount, filteredProducts.length)}
+                </span>{' '}
+                of{' '}
+                <span className="font-semibold text-[#292522]">{filteredProducts.length}</span>{' '}
+                thoughtfully designed pieces
+              </>
+            )}
           </p>
         </div>
 
@@ -500,8 +512,23 @@ export const ShopPage: React.FC<ShopPageProps> = ({
             </div>
           )}
 
-          {/* Empty state */}
-          {filteredProducts.length === 0 ? (
+          {/* Loading / empty / grid */}
+          {productsLoading && products.length === 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="rounded-xl border border-[#E9E3DE] bg-white overflow-hidden animate-pulse"
+                >
+                  <div className="aspect-[4/5] bg-[#EFECE6]" />
+                  <div className="p-3 space-y-2">
+                    <div className="h-3 w-2/3 rounded bg-[#EFECE6]" />
+                    <div className="h-3 w-1/3 rounded bg-[#EFECE6]" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div className="bg-white rounded-xl border border-[#E9E3DE] p-12 text-center space-y-4">
               <div className="w-12 h-12 mx-auto rounded-full bg-[#FAF8F5] flex items-center justify-center text-[#77716C] border border-[#E9E3DE]">
                 <Filter className="w-5 h-5" />

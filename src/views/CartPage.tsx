@@ -29,14 +29,17 @@ export const CartPage: React.FC = () => {
   const [promoInput, setPromoInput] = useState('');
   const [promoError, setPromoError] = useState('');
   const {
+    token: turnstileToken,
     setToken: setTurnstileToken,
     widgetKey,
     reset: resetTurnstile,
     obtainToken,
     controllerRef: turnstileControllerRef,
   } = useTurnstileToken();
+  const turnstileConfigured = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+  const checkoutUnlocked = !turnstileConfigured || Boolean(turnstileToken);
 
-  const activeZones = shopSettings.deliveryZones.filter((z) => z.active);
+  const activeZones = shopSettings.deliveryZones.filter((z) => z.active !== false);
   const deliveryHint = shopSettings.deliveryEnabled
     ? activeZones.length
       ? `Delivery from ৳${Math.min(...activeZones.map((z) => z.fee)).toLocaleString('en-BD')} — select zone at checkout`
@@ -256,16 +259,12 @@ export const CartPage: React.FC = () => {
                   />
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-[#292522] hover:bg-[#3D3834] text-white text-xs font-semibold rounded-md transition-colors"
+                    disabled={turnstileConfigured && !turnstileToken}
+                    className="px-4 py-2 bg-[#292522] hover:bg-[#3D3834] text-white text-xs font-semibold rounded-md transition-colors disabled:bg-[#D4CBC4] disabled:cursor-not-allowed"
                   >
                     Apply
                   </button>
                 </div>
-                <Turnstile
-                  key={widgetKey}
-                  onTokenChange={setTurnstileToken}
-                  controllerRef={turnstileControllerRef}
-                />
                 {promoError && (
                   <p className="text-[11px] text-[#A84940]">{promoError}</p>
                 )}
@@ -307,14 +306,41 @@ export const CartPage: React.FC = () => {
             </div>
           </div>
 
+          {turnstileConfigured && (
+            <div>
+              <Turnstile
+                key={widgetKey}
+                onTokenChange={setTurnstileToken}
+                controllerRef={turnstileControllerRef}
+              />
+              {!turnstileToken && (
+                <p className="text-[10px] text-[#77716C] mt-1">
+                  Complete the security check to continue to checkout.
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Checkout CTA */}
-          <Link
-            href="/checkout"
-            className="w-full py-3.5 px-4 bg-[#292522] hover:bg-[#3D3834] active:bg-[#1a1715] text-white text-xs font-semibold rounded-md flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer touch-manipulation select-none"
-          >
-            <span>Proceed to Checkout</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          {checkoutUnlocked ? (
+            <Link
+              href="/checkout"
+              className="w-full py-3.5 px-4 bg-[#292522] hover:bg-[#3D3834] active:bg-[#1a1715] text-white text-xs font-semibold rounded-md flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer touch-manipulation select-none"
+            >
+              <span>Proceed to Checkout</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="w-full py-3.5 px-4 bg-[#D4CBC4] text-white/90 text-xs font-semibold rounded-md flex items-center justify-center gap-2 cursor-not-allowed"
+              title="Complete the security check first"
+            >
+              <span>Proceed to Checkout</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
 
           {/* Guarantees */}
           <div className="pt-2 text-[11px] text-[#77716C] flex items-center justify-center gap-2">

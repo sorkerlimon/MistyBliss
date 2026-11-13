@@ -1,6 +1,6 @@
 import React from 'react';
 import { ProductDetailsPage } from '../../../views/ProductDetailsPage';
-import { PRODUCTS } from '../../../data/mockData';
+import { fetchSupabaseProductBySlug } from '../../../lib/supabase';
 import type { Metadata } from 'next';
 
 interface ProductDetailPageProps {
@@ -9,7 +9,7 @@ interface ProductDetailPageProps {
 
 export async function generateMetadata({ params }: ProductDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = PRODUCTS.find((p) => p.slug === slug);
+  const product = await fetchSupabaseProductBySlug(slug);
 
   if (!product) {
     return {
@@ -18,7 +18,9 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
     };
   }
 
-  const primaryImage = product.images?.[0] || 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80';
+  const primaryImage =
+    product.images?.[0] ||
+    'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80';
 
   return {
     title: `${product.name} | Misty Bliss`,

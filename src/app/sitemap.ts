@@ -1,8 +1,9 @@
 import { MetadataRoute } from 'next';
-import { PRODUCTS, CATEGORIES, ROOMS } from '../data/mockData';
+import { fetchSupabaseProducts, fetchSupabaseCategories, ensureSupabaseRoomsCatalog } from '../lib/supabase';
+import { CATEGORIES, ROOMS } from '../data/mockData';
 import { SITE_URL } from '../lib/site';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const staticPages: MetadataRoute.Sitemap = [
@@ -14,21 +15,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/shipping-returns`, lastModified: now, changeFrequency: 'monthly', priority: 0.55 },
   ];
 
-  const categoryPages: MetadataRoute.Sitemap = CATEGORIES.map((cat) => ({
+  const dbCategories = await fetchSupabaseCategories();
+  const categories = dbCategories && dbCategories.length > 0 ? dbCategories : CATEGORIES;
+  const categoryPages: MetadataRoute.Sitemap = categories.map((cat) => ({
     url: `${SITE_URL}/categories/${cat.slug}`,
     lastModified: now,
     changeFrequency: 'weekly',
     priority: 0.9,
   }));
 
-  const roomPages: MetadataRoute.Sitemap = ROOMS.map((room) => ({
-    url: `${SITE_URL}/rooms/${room.slug}`,
+  const dbRooms = await ensureSupabaseRoomsCatalog(ROOMS);
+  const rooms = dbRooms && dbRooms.length > 0 ? dbRooms : ROOMS;
+  const roomPages: MetadataRoute.Sitemap = rooms.map((room) => ({
+    url: `${SITE_URL}/collections/${room.slug}`,
     lastModified: now,
     changeFrequency: 'weekly',
     priority: 0.75,
   }));
 
-  const productPages: MetadataRoute.Sitemap = PRODUCTS.map((prod) => ({
+  const dbProducts = await fetchSupabaseProducts();
+  const productPages: MetadataRoute.Sitemap = (dbProducts || []).map((prod) => ({
     url: `${SITE_URL}/products/${prod.slug}`,
     lastModified: now,
     changeFrequency: 'weekly',

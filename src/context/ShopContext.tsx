@@ -16,7 +16,6 @@ import {
   DEFAULT_SHOP_SETTINGS,
 } from '../types';
 import {
-  PRODUCTS as INITIAL_PRODUCTS,
   CATEGORIES as INITIAL_CATEGORIES,
   ROOMS as INITIAL_ROOMS,
 } from '../data/mockData';
@@ -26,7 +25,6 @@ import {
   isSupabaseConfigured,
   testSupabaseConnection,
   fetchSupabaseProducts,
-  ensureSupabaseProductsCatalog,
   upsertSupabaseProduct,
   deleteSupabaseProduct,
   fetchSupabaseOrders,
@@ -57,8 +55,9 @@ interface PromoDiscount {
 }
 
 interface ShopContextType {
-  // Storefront products
+  // Storefront products (Supabase; localStorage used only as instant cache)
   products: Product[];
+  productsLoading: boolean;
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
   deleteProduct: (productId: string) => void;
@@ -76,7 +75,7 @@ interface ShopContextType {
 
   // Delivery & tax (admin-managed)
   shopSettings: ShopSettings;
-  updateShopSettings: (settings: ShopSettings) => void;
+  updateShopSettings: (settings: ShopSettings) => Promise<boolean>;
   addToCart: (productId: string, quantity?: number, selectedColor?: string) => void;
   removeFromCart: (productId: string, selectedColor?: string) => void;
   updateQuantity: (productId: string, quantity: number, selectedColor?: string) => void;
@@ -169,15 +168,19 @@ const PROMOS_STORAGE_KEY = 'misty_bliss_promos_v2';
 const CATEGORIES_STORAGE_KEY = 'misty_bliss_categories_v1';
 const ROOMS_STORAGE_KEY = 'misty_bliss_rooms_v1';
 const BLOG_STORAGE_KEY = 'misty_bliss_blog_posts_v1';
-const SETTINGS_STORAGE_KEY = 'misty_bliss_shop_settings_v1';
+const SETTINGS_STORAGE_KEY = 'misty_bliss_shop_settings_v2';
 const ADMIN_AUTH_KEY = 'misty_bliss_admin_auth_v2';
 
-const DEFAULT_CART: CartItem[] = [
+/** Empty for real storefront visitors (including incognito). */
+const DEFAULT_CART: CartItem[] = [];
+
+/** Sample items only used by "Load Sample Items" on empty checkout. */
+const SAMPLE_CART: CartItem[] = [
   { productId: 'mb-001', quantity: 1, selectedColor: 'Warm Cream' },
   { productId: 'mb-005', quantity: 1, selectedColor: 'Blush & Petal' },
 ];
 
-const DEFAULT_WISHLIST: string[] = ['mb-008', 'mb-011', 'mb-019'];
+const DEFAULT_WISHLIST: string[] = [];
 
 const INITIAL_PROMOS: PromoCode[] = [
   {
@@ -377,8 +380,9 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Hydration safety flag
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Products state
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+  // Products state — start empty; hydrate cache instantly, then refresh from Supabase
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
 
   // Orders state
   const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
@@ -400,6 +404,8 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Delivery & tax settings
   const [shopSettings, setShopSettings] = useState<ShopSettings>(DEFAULT_SHOP_SETTINGS);
+  /** Prevents writing default zones over saved settings before load finishes. */
+  const [settingsReady, setSettingsReady] = useState(false);
 
   // Admin Auth state
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
@@ -436,14 +442,17 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (Array.isArray(parsed)) setWishlist(parsed);
         }
 
-        // Products / rooms: local cache only when Supabase is not configured.
-        // With Supabase, refresh below replaces state from the database.
-        if (!isSupabaseConfigured) {
-          const storedProducts = localStorage.getItem(PRODUCTS_STORAGE_KEY);
-          if (storedProducts) {
-            const parsed = JSON.parse(storedProducts);
-            if (Array.isArray(parsed) && parsed.length > 0) setProducts(parsed);
+        // Instant product paint from last successful DB cache (not mock seed)
+        const storedProducts = localStorage.getItem(PRODUCTS_STORAGE_KEY);
+        if (storedProducts) {
+          const parsed = JSON.parse(storedProducts);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setProducts(parsed);
+            setProductsLoading(false);
           }
+        }
+
+        if (!isSupabaseConfigured) {
           const storedRooms = localStorage.getItem(ROOMS_STORAGE_KEY);
           if (storedRooms) {
             const parsed = JSON.parse(storedRooms);
@@ -454,6 +463,7 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const parsed = JSON.parse(storedBlog);
             if (Array.isArray(parsed) && parsed.length > 0) setBlogPosts(parsed);
           }
+          setProductsLoading(false);
         }
 
         const storedOrders = localStorage.getItem(ORDERS_STORAGE_KEY);
@@ -474,15 +484,20 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (Array.isArray(parsed) && parsed.length > 0) setCategories(parsed);
         }
 
-        const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        // Prefer v2 settings; migrate from v1 once if needed
+        const storedSettings =
+          localStorage.getItem(SETTINGS_STORAGE_KEY) ||
+          localStorage.getItem('misty_bliss_shop_settings_v1');
         if (storedSettings) {
           const parsed = JSON.parse(storedSettings);
           if (parsed && typeof parsed === 'object') {
             setShopSettings({
               ...DEFAULT_SHOP_SETTINGS,
               ...parsed,
+              deliveryEnabled: true,
+              taxEnabled: true,
               deliveryZones: Array.isArray(parsed.deliveryZones) && parsed.deliveryZones.length
-                ? parsed.deliveryZones
+                ? parsed.deliveryZones.map((z: any) => ({ ...z, active: true }))
                 : DEFAULT_SHOP_SETTINGS.deliveryZones,
             });
           }
@@ -507,15 +522,18 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSupabaseStatus(conn);
 
       if (conn.connected) {
-        // Products always come from Supabase when the table exists.
-        // Seed the full catalog if the remote table is empty/incomplete.
+        // Products: database only — never seed from mockData
         if (conn.tablesStatus?.products) {
-          const dbProducts = await ensureSupabaseProductsCatalog(INITIAL_PRODUCTS);
-          if (dbProducts && dbProducts.length > 0) {
+          const dbProducts = await fetchSupabaseProducts();
+          if (dbProducts) {
             setProducts(dbProducts);
-          } else {
-            const fallback = await fetchSupabaseProducts();
-            if (fallback && fallback.length > 0) setProducts(fallback);
+            try {
+              if (dbProducts.length > 0) {
+                localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(dbProducts));
+              }
+            } catch {
+              /* ignore */
+            }
           }
         }
 
@@ -565,40 +583,30 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (subs) setNewsletterSubscribers(subs);
         }
 
-        // Delivery & tax settings — prefer localStorage (admin just saved) over stale remote seed
+        // Delivery & tax — Supabase is source of truth so checkout/incognito see admin zones
         if (conn.tablesStatus?.shop_settings) {
-          let localSettings: ShopSettings | null = null;
-          try {
-            const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-            if (raw) {
-              const parsed = JSON.parse(raw);
-              if (parsed && typeof parsed === 'object') {
-                localSettings = {
-                  ...DEFAULT_SHOP_SETTINGS,
-                  ...parsed,
-                  deliveryZones:
-                    Array.isArray(parsed.deliveryZones) && parsed.deliveryZones.length
-                      ? parsed.deliveryZones
-                      : DEFAULT_SHOP_SETTINGS.deliveryZones,
-                };
-              }
-            }
-          } catch {
-            localSettings = null;
-          }
-
           const remoteSettings = await fetchSupabaseShopSettings();
-          if (localSettings) {
-            setShopSettings(localSettings);
-            // Keep Supabase in sync with what admin saved locally
-            upsertSupabaseShopSettings(localSettings).catch(() => {});
-          } else if (remoteSettings) {
-            setShopSettings(remoteSettings);
+          if (remoteSettings) {
+            const normalized: ShopSettings = {
+              ...remoteSettings,
+              deliveryEnabled: true,
+              taxEnabled: true,
+              deliveryZones: remoteSettings.deliveryZones.map((z) => ({ ...z, active: true })),
+            };
+            setShopSettings(normalized);
+            try {
+              localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(normalized));
+            } catch {
+              /* ignore */
+            }
           }
         }
       }
     } catch (err) {
       console.warn('Initial Supabase sync caught:', err);
+    } finally {
+      setProductsLoading(false);
+      setSettingsReady(true);
     }
   }, []);
 
@@ -608,12 +616,13 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [refreshSupabaseData]);
 
   // Sync to local storage only AFTER initial hydration has finished
+  // Cache DB products for instant next visit (never overwrite with empty)
   useEffect(() => {
-    if (!isHydrated) return;
+    if (!isHydrated || productsLoading || products.length === 0) return;
     try {
       localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
     } catch {}
-  }, [products, isHydrated]);
+  }, [products, isHydrated, productsLoading]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -651,11 +660,11 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [blogPosts, isHydrated]);
 
   useEffect(() => {
-    if (!isHydrated) return;
+    if (!isHydrated || !settingsReady) return;
     try {
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(shopSettings));
     } catch {}
-  }, [shopSettings, isHydrated]);
+  }, [shopSettings, isHydrated, settingsReady]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -679,7 +688,7 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [isAdminLoggedIn, isHydrated]);
 
   const resetDemoCart = () => {
-    setCart(DEFAULT_CART);
+    setCart(SAMPLE_CART);
     addToast('Demo Cart Loaded', '2 curated items added to your shopping bag', 'success');
   };
 
@@ -1130,23 +1139,41 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return Math.max(0, cartSubtotal - discountAmount);
   }, [cartSubtotal, discountAmount]);
 
-  const updateShopSettings = (settings: ShopSettings) => {
+  const updateShopSettings = async (settings: ShopSettings): Promise<boolean> => {
     const next: ShopSettings = {
-      deliveryEnabled: Boolean(settings.deliveryEnabled),
+      deliveryEnabled: true,
       deliveryZones: (settings.deliveryZones || [])
         .map((z) => ({
           id: z.id || `zone-${Date.now()}`,
           name: (z.name || 'Zone').trim() || 'Zone',
           fee: Math.max(0, Number(z.fee) || 0),
-          active: z.active !== false,
+          active: true,
         }))
         .filter((z) => z.name),
-      taxEnabled: Boolean(settings.taxEnabled),
+      taxEnabled: true,
       taxPercent: Math.max(0, Number(settings.taxPercent) || 0),
     };
     if (next.deliveryZones.length === 0) {
       next.deliveryZones = DEFAULT_SHOP_SETTINGS.deliveryZones;
     }
+
+    const saved = await upsertSupabaseShopSettings(next);
+    if (!saved) {
+      // Still keep local so admin isn't blocked, but warn — checkout needs Supabase
+      setShopSettings(next);
+      try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      addToast(
+        'Saved locally only',
+        'Could not sync to database. Checkout on other devices may not see new zones.',
+        'info'
+      );
+      return false;
+    }
+
     setShopSettings(next);
     try {
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
@@ -1155,13 +1182,9 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     addToast(
       'Settings Saved',
-      next.taxEnabled
-        ? `Tax ${next.taxPercent}% on · delivery ${next.deliveryEnabled ? 'on' : 'off'}`
-        : `Tax off · delivery ${next.deliveryEnabled ? 'on' : 'off'}`
+      `${next.deliveryZones.length} delivery zones · tax ${next.taxPercent}%`
     );
-    upsertSupabaseShopSettings(next).catch((err) => {
-      console.warn('Supabase shop settings save failed:', err);
-    });
+    return true;
   };
 
   const applyPromoCode = (code: string) => {
@@ -1211,6 +1234,7 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <ShopContext.Provider
       value={{
         products,
+        productsLoading,
         addProduct,
         updateProduct,
         deleteProduct,

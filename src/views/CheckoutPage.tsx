@@ -50,7 +50,7 @@ export const CheckoutPage: React.FC = () => {
   } = useTurnstileToken();
 
   const activeZones = useMemo(
-    () => shopSettings.deliveryZones.filter((z) => z.active),
+    () => shopSettings.deliveryZones.filter((z) => z.active !== false),
     [shopSettings.deliveryZones]
   );
 
