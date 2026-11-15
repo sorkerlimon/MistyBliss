@@ -5,8 +5,11 @@ import { Sparkles, X } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
 import { formatMoney } from '../../lib/money';
 
+/** Hardcoded free-shipping threshold shown in the store announcement bar */
+const ANNOUNCEMENT_DELIVERY_FROM = 3500;
+
 export const AnnouncementBar: React.FC = () => {
-  const { promoCodes, shopSettings } = useShop();
+  const { promoCodes } = useShop();
   const [isVisible, setIsVisible] = useState(true);
 
   const activePromo = useMemo(
@@ -14,20 +17,9 @@ export const AnnouncementBar: React.FC = () => {
     [promoCodes]
   );
 
-  const deliveryFrom = useMemo(() => {
-    if (!shopSettings.deliveryEnabled) return null;
-    const fees = shopSettings.deliveryZones
-      .filter((z) => z.active !== false)
-      .map((z) => z.fee);
-    if (!fees.length) return null;
-    return Math.min(...fees);
-  }, [shopSettings]);
-
   if (!isVisible) return null;
-  if (!activePromo && deliveryFrom == null) return null;
 
-  const deliveryText =
-    deliveryFrom != null ? `Delivery from ${formatMoney(deliveryFrom)}` : null;
+  const deliveryText = `Delivery from ${formatMoney(ANNOUNCEMENT_DELIVERY_FROM)}`;
   const promoText = activePromo
     ? `Use code ${activePromo.code} for ${activePromo.discountPercent}% off`
     : null;

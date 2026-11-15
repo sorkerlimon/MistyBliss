@@ -8,17 +8,10 @@ import { MistyBlissIcon } from '../common/MistyBlissIcon';
 import { X, ArrowRight, Sparkles, Search, ChevronRight } from 'lucide-react';
 
 export const MobileMenuDrawer: React.FC = () => {
-  const { isMobileMenuOpen, closeMobileMenu, categories, rooms, promoCodes, shopSettings } =
-    useShop();
+  const { isMobileMenuOpen, closeMobileMenu, categories, rooms, promoCodes } = useShop();
   const [mounted, setMounted] = useState(false);
   const activePromo = promoCodes.find((p) => p.status === 'active') || null;
-  const deliveryFees = shopSettings.deliveryZones
-    .filter((z) => z.active !== false)
-    .map((z) => z.fee);
-  const deliveryFrom =
-    shopSettings.deliveryEnabled && deliveryFees.length
-      ? Math.min(...deliveryFees)
-      : null;
+  const deliveryFrom = 3500;
 
   useEffect(() => {
     setMounted(true);
