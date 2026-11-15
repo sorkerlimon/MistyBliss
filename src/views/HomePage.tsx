@@ -5,8 +5,6 @@ import Link from 'next/link';
 import { useShop } from '../context/ShopContext';
 import { ProductCard } from '../components/product/ProductCard';
 import { ArrowRight } from 'lucide-react';
-import { JournalSection } from '../components/home/JournalSection';
-
 export const HomePage: React.FC = () => {
   const { products, categories, rooms } = useShop();
 
@@ -285,9 +283,6 @@ export const HomePage: React.FC = () => {
           ))}
         </div>
       </section>
-
-      {/* SECTION 9: The Misty Bliss Journal (Editorial Blog List) */}
-      <JournalSection />
 
     </div>
   );

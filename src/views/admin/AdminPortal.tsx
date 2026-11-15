@@ -12,7 +12,6 @@ import {
   ShoppingCart,
   Tag,
   FolderTree,
-  BookOpen,
   Mail,
   LayoutDashboard,
   Truck,
@@ -21,7 +20,6 @@ import { cleanCredential } from '../../lib/adminConfig';
 import { CategoryAdminPanel } from './CategoryAdminPanel';
 import { ProductAdminPanel } from './ProductAdminPanel';
 import { PromoAdminPanel } from './PromoAdminPanel';
-import { BlogAdminPanel } from './BlogAdminPanel';
 import { NewsletterAdminPanel } from './NewsletterAdminPanel';
 import { ShippingTaxAdminPanel } from './ShippingTaxAdminPanel';
 import { AdminDashboard } from './AdminDashboard';
@@ -34,7 +32,6 @@ type AdminTab =
   | 'products'
   | 'promos'
   | 'categories'
-  | 'blog'
   | 'subscribers'
   | 'shipping';
 
@@ -44,7 +41,6 @@ export const AdminPortal: React.FC = () => {
     orders,
     promoCodes,
     categories,
-    blogPosts,
     newsletterSubscribers,
     shopSettings,
     isAdminLoggedIn,
@@ -90,7 +86,6 @@ export const AdminPortal: React.FC = () => {
     { id: 'orders', label: 'Orders', count: orders.length, icon: <ShoppingCart className="w-3.5 h-3.5" /> },
     { id: 'categories', label: 'Categories', count: categories.length, icon: <FolderTree className="w-3.5 h-3.5" /> },
     { id: 'products', label: 'Products', count: products.length, icon: <Package className="w-3.5 h-3.5" /> },
-    { id: 'blog', label: 'Journal', count: blogPosts.length, icon: <BookOpen className="w-3.5 h-3.5" /> },
     {
       id: 'subscribers',
       label: 'Subscribers',
@@ -365,7 +360,6 @@ export const AdminPortal: React.FC = () => {
 
             {activeTab === 'categories' && <CategoryAdminPanel />}
             {activeTab === 'products' && <ProductAdminPanel />}
-            {activeTab === 'blog' && <BlogAdminPanel />}
             {activeTab === 'subscribers' && <NewsletterAdminPanel />}
             {activeTab === 'promos' && <PromoAdminPanel />}
             {activeTab === 'shipping' && <ShippingTaxAdminPanel />}

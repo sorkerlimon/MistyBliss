@@ -145,8 +145,8 @@ export const Footer: React.FC = () => {
       setFooterEmail('');
       resetTurnstile();
       addToast(
-        'Subscribed to Studio Journal',
-        data.message || 'Welcome to Misty Bliss. 10% code applied to your next purchase.'
+        'Subscribed',
+        data.message || 'Welcome to Misty Bliss. Check your inbox for your welcome offer.'
       );
     } catch {
       setSubscribeError('Network error. Please check your connection and try again.');

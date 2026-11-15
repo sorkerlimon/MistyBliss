@@ -179,41 +179,6 @@ export const DEFAULT_SHOP_SETTINGS: ShopSettings = {
   taxPercent: 5,
 };
 
-export type BlogCategory =
-  | 'Studio Craft'
-  | 'Interior Styling'
-  | 'Material Studies'
-  | 'Botanical Notes'
-  | string;
-
-export interface BlogPost {
-  id: string;
-  slug: string;
-  title: string;
-  subtitle?: string;
-  excerpt: string;
-  content: string[];
-  category: BlogCategory;
-  author: {
-    name: string;
-    role: string;
-    avatar: string;
-  };
-  publishedDate: string;
-  readTime: string;
-  coverImage: string;
-  tags: string[];
-  featured?: boolean;
-  relatedProductSlugs?: string[];
-}
-
-export const BLOG_CATEGORIES = [
-  'Studio Craft',
-  'Interior Styling',
-  'Material Studies',
-  'Botanical Notes',
-] as const;
-
 export interface NewsletterSubscriber {
   id: number | string;
   email: string;

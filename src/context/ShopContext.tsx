@@ -10,7 +10,6 @@ import {
   PromoCode,
   Category,
   RoomCollection,
-  BlogPost,
   NewsletterSubscriber,
   ShopSettings,
   DEFAULT_SHOP_SETTINGS,
@@ -34,9 +33,6 @@ import {
   upsertSupabaseCategory,
   deleteSupabaseCategory,
   ensureSupabaseRoomsCatalog,
-  fetchSupabaseBlogPosts,
-  upsertSupabaseBlogPost,
-  deleteSupabaseBlogPost,
   fetchSupabaseNewsletterSubscribers,
   deleteSupabaseNewsletterSubscriber,
   fetchSupabaseShopSettings,
@@ -129,12 +125,6 @@ interface ShopContextType {
   // Rooms (homepage / collections)
   rooms: RoomCollection[];
 
-  // Journal / blog posts
-  blogPosts: BlogPost[];
-  addBlogPost: (post: Omit<BlogPost, 'id' | 'slug'> & { slug?: string }) => BlogPost | null;
-  updateBlogPost: (post: BlogPost) => void;
-  deleteBlogPost: (postId: string) => void;
-
   // Newsletter Design Circle members
   newsletterSubscribers: NewsletterSubscriber[];
   refreshNewsletterSubscribers: () => Promise<void>;
@@ -164,7 +154,6 @@ const ORDERS_STORAGE_KEY = 'misty_bliss_orders_v2';
 const PROMOS_STORAGE_KEY = 'misty_bliss_promos_v3';
 const CATEGORIES_STORAGE_KEY = 'misty_bliss_categories_v2';
 const ROOMS_STORAGE_KEY = 'misty_bliss_rooms_v1';
-const BLOG_STORAGE_KEY = 'misty_bliss_blog_posts_v2';
 const SETTINGS_STORAGE_KEY = 'misty_bliss_shop_settings_v2';
 const ADMIN_AUTH_KEY = 'misty_bliss_admin_auth_v2';
 
@@ -349,9 +338,6 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Rooms state
   const [rooms, setRooms] = useState<RoomCollection[]>(INITIAL_ROOMS);
 
-  // Journal / blog — Supabase only (empty when DB has none)
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-
   // Newsletter subscribers
   const [newsletterSubscribers, setNewsletterSubscribers] = useState<NewsletterSubscriber[]>([]);
 
@@ -410,11 +396,6 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (storedRooms) {
             const parsed = JSON.parse(storedRooms);
             if (Array.isArray(parsed) && parsed.length > 0) setRooms(parsed);
-          }
-          const storedBlog = localStorage.getItem(BLOG_STORAGE_KEY);
-          if (storedBlog) {
-            const parsed = JSON.parse(storedBlog);
-            if (Array.isArray(parsed) && parsed.length > 0) setBlogPosts(parsed);
           }
           setProductsLoading(false);
         }
@@ -532,19 +513,6 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        // Journal blog posts: database only — never seed from mock
-        if (conn.tablesStatus?.blog_posts) {
-          const dbPosts = await fetchSupabaseBlogPosts();
-          if (dbPosts) {
-            setBlogPosts(dbPosts);
-            try {
-              localStorage.setItem(BLOG_STORAGE_KEY, JSON.stringify(dbPosts));
-            } catch {
-              /* ignore */
-            }
-          }
-        }
-
         // Newsletter Design Circle members
         if (conn.tablesStatus?.newsletter_subscribers) {
           const subs = await fetchSupabaseNewsletterSubscribers();
@@ -620,13 +588,6 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem(ROOMS_STORAGE_KEY, JSON.stringify(rooms));
     } catch {}
   }, [rooms, isHydrated]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    try {
-      localStorage.setItem(BLOG_STORAGE_KEY, JSON.stringify(blogPosts));
-    } catch {}
-  }, [blogPosts, isHydrated]);
 
   useEffect(() => {
     if (!isHydrated || !settingsReady) return;
@@ -862,103 +823,6 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     deleteSupabaseCategory(categoryId).catch((err) => {
       console.warn('Supabase category delete failed:', err);
     });
-  };
-
-  // Blog / Journal CRUD
-  const addBlogPost = (input: Omit<BlogPost, 'id' | 'slug'> & { slug?: string }): BlogPost | null => {
-    const title = input.title.trim();
-    if (!title) {
-      addToast('Title required', 'Enter a blog title before saving', 'info');
-      return null;
-    }
-    if (!input.coverImage?.trim()) {
-      addToast('Cover image required', 'Add a cover image link', 'info');
-      return null;
-    }
-    const slug = uniqueSlug(input.slug?.trim() || title, blogPosts.map((p) => p.slug));
-    const newPost: BlogPost = {
-      id: `post-${Date.now().toString(36)}`,
-      slug,
-      title,
-      subtitle: (input.subtitle || '').trim(),
-      excerpt: (input.excerpt || '').trim() || title,
-      content: (input.content || []).map((p) => p.trim()).filter(Boolean),
-      category: input.category || 'Studio Craft',
-      author: {
-        name: input.author?.name?.trim() || 'Misty Bliss Studio',
-        role: input.author?.role?.trim() || 'Editor',
-        avatar:
-          input.author?.avatar?.trim() ||
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-      },
-      publishedDate:
-        input.publishedDate?.trim() ||
-        new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      readTime: input.readTime?.trim() || '3 min read',
-      coverImage: input.coverImage.trim(),
-      tags: input.tags || [],
-      featured: Boolean(input.featured),
-      relatedProductSlugs: input.relatedProductSlugs || [],
-    };
-
-    // Only one featured post at a time
-    setBlogPosts((prev) => {
-      const next = newPost.featured ? prev.map((p) => ({ ...p, featured: false })) : prev;
-      return [newPost, ...next];
-    });
-    addToast('Blog Post Created', `${newPost.title} is live in the Journal`);
-    upsertSupabaseBlogPost(newPost).catch((err) => console.warn('Supabase blog add failed:', err));
-    if (newPost.featured) {
-      blogPosts
-        .filter((p) => p.featured)
-        .forEach((p) => {
-          upsertSupabaseBlogPost({ ...p, featured: false }).catch(() => {});
-        });
-    }
-    return newPost;
-  };
-
-  const updateBlogPost = (updated: BlogPost) => {
-    const others = blogPosts.filter((p) => p.id !== updated.id).map((p) => p.slug);
-    const slug = uniqueSlug(updated.slug || updated.title, others);
-    const next: BlogPost = {
-      ...updated,
-      slug: slugify(slug) || updated.slug,
-      title: updated.title.trim(),
-      subtitle: (updated.subtitle || '').trim(),
-      excerpt: (updated.excerpt || '').trim(),
-      content: (updated.content || []).map((p) => p.trim()).filter(Boolean),
-      coverImage: updated.coverImage.trim(),
-      author: {
-        name: updated.author.name.trim() || 'Misty Bliss Studio',
-        role: updated.author.role.trim() || 'Editor',
-        avatar: updated.author.avatar.trim(),
-      },
-    };
-
-    setBlogPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === next.id) return next;
-        if (next.featured) return { ...p, featured: false };
-        return p;
-      })
-    );
-    addToast('Blog Post Updated', `${next.title} saved`);
-    upsertSupabaseBlogPost(next).catch((err) => console.warn('Supabase blog update failed:', err));
-    if (next.featured) {
-      blogPosts
-        .filter((p) => p.id !== next.id && p.featured)
-        .forEach((p) => {
-          upsertSupabaseBlogPost({ ...p, featured: false }).catch(() => {});
-        });
-    }
-  };
-
-  const deleteBlogPost = (postId: string) => {
-    const target = blogPosts.find((p) => p.id === postId);
-    setBlogPosts((prev) => prev.filter((p) => p.id !== postId));
-    addToast('Blog Post Deleted', target ? `"${target.title}" removed` : 'Post removed', 'info');
-    deleteSupabaseBlogPost(postId).catch((err) => console.warn('Supabase blog delete failed:', err));
   };
 
   const refreshNewsletterSubscribers = useCallback(async () => {
@@ -1266,11 +1130,6 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
         deleteCategory,
 
         rooms,
-
-        blogPosts,
-        addBlogPost,
-        updateBlogPost,
-        deleteBlogPost,
 
         newsletterSubscribers,
         refreshNewsletterSubscribers,
