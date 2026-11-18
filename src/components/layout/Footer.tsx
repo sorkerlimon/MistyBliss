@@ -11,8 +11,6 @@ import {
   Send,
   Check,
   Globe,
-  Truck,
-  Sparkles,
 } from 'lucide-react';
 import { SITE_ADDRESS } from '../../lib/site';
 import { recordNewsletterSubscriber } from '../../lib/supabase';
@@ -200,40 +198,6 @@ export const Footer: React.FC = () => {
 
   return (
     <footer className="bg-[#24211E] text-[#FAF8F5] border-t border-[#38332E] mt-20 relative overflow-hidden">
-      
-      {/* Top Banner: Modern Value Propositions (2x2 grid on mobile, 4 cols on desktop) */}
-      <div className="border-b border-[#38332E]/80 bg-[#1D1A18]/60 backdrop-blur-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 text-xs">
-            
-            <div className="flex items-start gap-2.5 sm:gap-3.5">
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#2F2B27] flex items-center justify-center text-[#C77F79] shrink-0 border border-[#443E38]">
-                <Truck className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-white tracking-tight text-[11px] sm:text-xs">Free Express Shipping</h4>
-                <p className="text-[#A89F97] mt-0.5 text-[10px] sm:text-[11px] leading-relaxed">
-                  On orders over ৳75.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2.5 sm:gap-3.5">
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#2F2B27] flex items-center justify-center text-[#C77F79] shrink-0 border border-[#443E38]">
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-white tracking-tight text-[11px] sm:text-xs">Plastic-Free Packaging</h4>
-                <p className="text-[#A89F97] mt-0.5 text-[10px] sm:text-[11px] leading-relaxed">
-                  100% biodegradable materials.
-                </p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
       {/* Main Footer Body */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14 pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8">

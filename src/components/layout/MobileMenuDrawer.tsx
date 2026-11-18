@@ -11,7 +11,7 @@ export const MobileMenuDrawer: React.FC = () => {
   const { isMobileMenuOpen, closeMobileMenu, categories, rooms, promoCodes } = useShop();
   const [mounted, setMounted] = useState(false);
   const activePromo = promoCodes.find((p) => p.status === 'active') || null;
-  const deliveryFrom = 3500;
+  const deliveryAnnouncement = 'Upto 3999 TK delivery Free';
 
   useEffect(() => {
     setMounted(true);
@@ -116,15 +116,11 @@ export const MobileMenuDrawer: React.FC = () => {
             </Link>
           </div>
 
-          {(activePromo || deliveryFrom != null) && (
+          {(activePromo || deliveryAnnouncement) && (
             <div className="px-4 py-2 bg-[#F1E5E1] text-[11px] text-[#292522] flex items-center justify-between gap-2 border-b border-[#E9E3DE]">
               <span className="flex items-center gap-1.5 font-medium min-w-0 truncate">
                 <Sparkles className="w-3 h-3 text-[#C77F79] shrink-0" />
-                {deliveryFrom != null
-                  ? `Delivery from ৳${deliveryFrom.toLocaleString('en-BD')}`
-                  : activePromo
-                    ? `${activePromo.discountPercent}% off with code`
-                    : null}
+                {deliveryAnnouncement}
               </span>
               {activePromo && (
                 <span className="font-mono font-semibold bg-[#FAF8F5] px-1.5 py-0.5 rounded text-[10px] border border-[#E9E3DE] shrink-0">

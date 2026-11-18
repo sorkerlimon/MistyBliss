@@ -149,10 +149,9 @@ export const HomePage: React.FC = () => {
 
             <div className="lg:col-span-7 h-56 sm:h-80 lg:h-[360px] overflow-hidden">
               <img
-                src="https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=1100&q=80"
-                alt="Botanical floral arrangements in rustic ceramic urns"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover"
+                src="/images/botanical-living.jpg"
+                alt="Modern interior with framed art, console styling, and natural home decor accents"
+                className="w-full h-full object-cover object-center"
               />
             </div>
           </div>

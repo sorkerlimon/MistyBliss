@@ -3,10 +3,8 @@
 import React, { useMemo, useState } from 'react';
 import { Sparkles, X } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
-import { formatMoney } from '../../lib/money';
 
-/** Hardcoded free-shipping threshold shown in the store announcement bar */
-const ANNOUNCEMENT_DELIVERY_FROM = 3500;
+const DELIVERY_ANNOUNCEMENT = 'Upto 3999 TK delivery Free';
 
 export const AnnouncementBar: React.FC = () => {
   const { promoCodes } = useShop();
@@ -19,11 +17,6 @@ export const AnnouncementBar: React.FC = () => {
 
   if (!isVisible) return null;
 
-  const deliveryText = `Delivery from ${formatMoney(ANNOUNCEMENT_DELIVERY_FROM)}`;
-  const promoText = activePromo
-    ? `Use code ${activePromo.code} for ${activePromo.discountPercent}% off`
-    : null;
-
   return (
     <aside
       aria-label="Store announcement"
@@ -34,30 +27,23 @@ export const AnnouncementBar: React.FC = () => {
           <Sparkles className="w-3.5 h-3.5 text-[#C77F79] shrink-0 hidden sm:inline-block" />
 
           <span className="sm:hidden text-[11px] leading-tight truncate">
+            {DELIVERY_ANNOUNCEMENT}
             {activePromo ? (
               <>
+                {' · '}
                 Code:{' '}
                 <span className="font-mono font-semibold text-[#292522]">{activePromo.code}</span>
                 {' · '}
                 {activePromo.discountPercent}% off
-                {deliveryText ? ` · ${deliveryText}` : ''}
               </>
-            ) : (
-              deliveryText
-            )}
+            ) : null}
           </span>
 
           <span className="hidden sm:inline truncate">
-            {deliveryText && (
-              <>
-                <strong className="font-semibold">Studio Delivery:</strong> {deliveryText}
-              </>
-            )}
-            {deliveryText && promoText && (
-              <span className="text-[#77716C]"> · </span>
-            )}
+            <strong className="font-semibold">{DELIVERY_ANNOUNCEMENT}</strong>
             {activePromo && (
               <span className="text-[#77716C]">
+                {' · '}
                 Use code{' '}
                 <span className="font-mono font-medium text-[#292522] bg-[#FAF8F5] px-1 py-0.5 rounded border border-[#E9E3DE]">
                   {activePromo.code}
